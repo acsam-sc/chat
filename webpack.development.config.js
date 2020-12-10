@@ -1,35 +1,20 @@
 const { resolve } = require('path')
-require('dotenv').config()
 const fs = require('fs')
-
 const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin')
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
+const eslintCacheIdentifier = JSON.stringify(fs.statSync('.eslintrc').mtimeMs)
+require('dotenv').config()
 
-const APP_VERSION = 'development'
+const version = 'development'
 const config = {
-  stats: {
-    modules: false
-  },
-  devtool: 'eval-source-map',
-  entry: [
-    'babel-polyfill',
-    'react-hot-loader/patch',
-    'webpack-dev-server/client?http://0.0.0.0:8087',
-    'webpack/hot/only-dev-server',
-    './main.js'
-  ],
+  devtool: 'cheap-module-eval-source-map',
+
+  entry: ['./main.js'],
   resolve: {
-
-    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
-      './setPrototypeOf': './setPrototypeOf.js',
-      './defineProperty': './defineProperty.js',
-      '../../helpers/esm/typeof': '../../helpers/esm/typeof.js',
-      './assertThisInitialized': './assertThisInitialized.js',
-
       d3: 'd3/index.js',
       'react-dom': '@hot-loader/react-dom'
     }
@@ -43,12 +28,13 @@ const config = {
   mode: 'development',
   context: resolve(__dirname, 'client'),
   devServer: {
-    hot: true,
+    hot: false,
     contentBase: resolve(__dirname, 'dist/assets'),
     watchContentBase: true,
-    host: '0.0.0.0',
+    host: 'localhost',
     port: 8087,
-
+    disableHostCheck: true,
+    open: true,
     historyApiFallback: true,
     overlay: {
       warnings: false,
@@ -57,10 +43,10 @@ const config = {
     proxy: [
       {
         context: ['/api', '/auth', '/ws'],
-        target: 'http://0.0.0.0:8090',
+        target: `http://localhost:${process.env.PORT || 8090}`,
         secure: false,
         changeOrigin: true,
-        ws: true
+        ws: (process.env.ENABLE_SOCKETS || false)
       }
     ]
   },
@@ -71,11 +57,21 @@ const config = {
         test: /\.js$/,
         exclude: /node_modules/,
         include: [/client/, /server/],
-        use: ['eslint-loader']
+        loader: [
+          {
+            loader: 'eslint-loader',
+            options: {
+              cache: false,
+
+              cacheIdentifer: eslintCacheIdentifier
+            }
+          }
+        ]
       },
       {
         test: /\.js$/,
-        use: 'babel-loader',
+        loaders: ['babel-loader'],
+        include: [/client/, /stories/],
         exclude: /node_modules/
       },
       {
@@ -84,7 +80,8 @@ const config = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              publicPath: '../'
+              publicPath: '../',
+              hmr: process.env.NODE_ENV === 'development'
             }
           },
           { loader: 'css-loader', options: { sourceMap: true } },
@@ -104,7 +101,8 @@ const config = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              publicPath: '../'
+              publicPath: '../',
+              hmr: process.env.NODE_ENV === 'development'
             }
           },
 
@@ -113,11 +111,18 @@ const config = {
             loader: 'postcss-loader'
           },
           {
-            loader: 'sass-loader'
+            loader: 'sass-loader',
+            query: {
+              sourceMap: false
+            }
           }
         ]
       },
-
+      {
+        test: /\.(jpg|png|gif|svg|webp)$/,
+        loader: 'image-webpack-loader',
+        enforce: 'pre'
+      },
       {
         test: /\.(png|jpg|gif|webp)$/,
         use: [
@@ -154,13 +159,6 @@ const config = {
         test: /\.svg$/,
         use: [
           {
-            loader: 'file-loader',
-            options: {
-              name: '[name].[ext]',
-              outputPath: 'fonts/'
-            }
-          },
-          {
             loader: 'svg-url-loader',
             options: {
               limit: 10 * 1024,
@@ -173,7 +171,7 @@ const config = {
   },
 
   plugins: [
-    // new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.optimize.ModuleConcatenationPlugin(),
     new MiniCssExtractPlugin({
       filename: 'css/main.css',
       chunkFilename: 'css/[id].css',
@@ -182,31 +180,33 @@ const config = {
     new CopyWebpackPlugin(
       {
         patterns: [
-          { from: 'assets/images', to: 'images' },
-          { from: 'assets/fonts', to: 'fonts' },
-          { from: 'assets/manifest.json', to: 'manifest.json' },
-          { from: 'index.html', to: 'index.html' },
+          { from: `${__dirname}/client/assets/images`, to: 'images' },
+          { from: `${__dirname}/client/assets/fonts`, to: 'fonts' },
+
+          { from: `${__dirname}/client/assets/sitemap.xml`, to: 'sitemap.xml' },
+          { from: `${__dirname}/client/assets/manifest.json`, to: 'manifest.json' },
+          { from: `${__dirname}/client/index.html`, to: 'index.html' },
 
           {
-            from: 'install-sw.js',
+            from: `${__dirname}/client/install-sw.js`,
             to: 'js/install-sw.js',
             transform: (content) => {
-              return content.toString().replace(/APP_VERSION/g, APP_VERSION)
+              return content.toString().replace(/APP_VERSION/g, version)
             }
           },
-          { from: 'vendors', to: 'vendors' },
+          { from: `${__dirname}/client/assets/robots.txt`, to: 'robots.txt' },
           {
-            from: 'html.js',
+            from: `${__dirname}/client/html.js`,
             to: 'html.js',
             transform: (content) => {
-              return content.toString().replace(/COMMITHASH/g, APP_VERSION)
+              return content.toString().replace(/COMMITHASH/g, version)
             }
           },
           {
-            from: 'sw.js',
+            from: `${__dirname}/client/sw.js`,
             to: 'sw.js',
             transform: (content) => {
-              return content.toString().replace(/APP_VERSION/g, APP_VERSION)
+              return content.toString().replace(/APP_VERSION/g, version)
             }
           }
         ]
@@ -214,21 +214,18 @@ const config = {
       { parallel: 100 }
     ),
 
-    new ReactRefreshWebpackPlugin({
-      overlay: {
-        sockIntegration: 'whm'
-      }
-    }), // new HardSourceWebpackPlugin(),
-    new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
     new webpack.DefinePlugin(
       Object.keys(process.env).reduce(
         (res, key) => ({ ...res, [key]: JSON.stringify(process.env[key]) }),
         {
-          APP_VERSION: JSON.stringify(APP_VERSION),
-          'windows.process': { cwd: () => '' }
+          APP_VERSION: +new Date(),
+          ENABLE_SOCKETS: JSON.stringify(process.env.ENABLE_SOCKETS || false)
         }
       )
-    )
+    ),
+    //  new HardSourceWebpackPlugin(),
+    new webpack.HotModuleReplacementPlugin()
   ]
 }
 

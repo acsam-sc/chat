@@ -1,79 +1,90 @@
 const { resolve } = require('path')
 require('dotenv').config()
+const fs = require('fs')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const GitRevisionPlugin = require('git-revision-webpack-plugin')
 const StringReplacePlugin = require('string-replace-webpack-plugin')
-const TerserJSPlugin = require('terser-webpack-plugin')
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin')
-
-const nodeExternals = require('webpack-node-externals')
+const TerserJSPlugin = require('terser-webpack-plugin')
+const { v4: uuidv4 } = require('uuid')
 
 const gitRevisionPlugin = new GitRevisionPlugin()
-const date = +new Date()
-
-console.log(date - (date % (1000 * 60 * 30)))
-const APP_VERSION = Buffer.from((date - (date % (1000 * 60 * 30))).toString())
-  .toString('base64')
-  .replace(/==/, '')
+const APP_VERSION = uuidv4().substr(0, 7)
 
 const config = {
-  optimization: {
-    minimize: true,
-    minimizer: [
-      new TerserJSPlugin({ parallel: true }),
-      new OptimizeCSSAssetsPlugin({
-        cssProcessor: require('cssnano'),
-        cssProcessorPluginOptions: {
-          preset: ['default', { discardComments: { removeAll: true } }]
-        }
-      })
-    ]
-  },
+  // optimization: {
+  //   minimize: true,
+  //   minimizer: [
+  //     new TerserJSPlugin({ parallel: true }),
+  //     new OptimizeCSSAssetsPlugin({
+  //       cssProcessor: require('cssnano'),
+  //       cssProcessorPluginOptions: {
+  //         preset: ['default', { discardComments: { removeAll: true } }]
+  //       }
+  //     })
+  //   ]
+  // },
+  // node: {
+  //   fs: 'empty'
+  // },
   target: 'node',
-  mode: 'development',
+
   entry: {
     root: './config/root.js'
   },
-  externals: [nodeExternals()],
   resolve: {
-
     alias: {
-      d3: 'd3/index.js',
-      './setPrototypeOf': './setPrototypeOf.js',
-      './defineProperty': './defineProperty.js',
-      '../../helpers/esm/typeof': '../../helpers/esm/typeof.js',
-      './assertThisInitialized': './assertThisInitialized.js'
+      d3: 'd3/index.js'
     }
   },
   output: {
     filename: 'js/ssr/[name].bundle.js',
     path: resolve(__dirname, 'dist/assets'),
     publicPath: '/',
-    chunkFilename: 'js/ssr/[name].js?id=[chunkhash]',
-    libraryTarget: 'commonjs'
+    chunkFilename: 'js/ssr/root.[name].bundle.js?id=[chunkhash]'
   },
   mode: 'production',
   context: resolve(__dirname, 'client'),
   devtool: false,
   performance: {
     hints: 'warning',
-    maxEntrypointSize: 1512000,
-    maxAssetSize: 1512000
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000
   },
   module: {
     rules: [
       {
+        test: /.html$/,
+        loader: StringReplacePlugin.replace({
+          replacements: [
+            {
+              pattern: /COMMITHASH/gi,
+              replacement() {
+                return gitRevisionPlugin.commithash()
+              }
+            }
+          ]
+        })
+      },
+      {
         enforce: 'pre',
         test: /\.js$/,
         exclude: /node_modules/,
-        include: [/client/, /server/],
-        use: ['eslint-loader']
+        loader: [
+          {
+            loader: 'eslint-loader',
+            options: {
+              cache: true
+            }
+          }
+        ]
       },
       {
         test: /\.js$/,
-        use: 'babel-loader',
+        loaders: ['babel-loader'],
         exclude: /node_modules/
       },
       {
@@ -82,10 +93,11 @@ const config = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              publicPath: '../'
+              publicPath: '../',
+              hmr: process.env.NODE_ENV === 'development'
             }
           },
-          { loader: 'css-loader', options: { sourceMap: true } },
+          { loader: 'css-loader', options: { sourceMap: false } },
           {
             loader: 'postcss-loader'
           }
@@ -102,22 +114,30 @@ const config = {
           {
             loader: MiniCssExtractPlugin.loader,
             options: {
-              publicPath: '../'
+              publicPath: '../',
+              hmr: process.env.NODE_ENV === 'development'
             }
           },
 
-          { loader: 'css-loader', options: { sourceMap: true } },
+          { loader: 'css-loader', options: { sourceMap: false } },
           {
             loader: 'postcss-loader'
           },
           {
-            loader: 'sass-loader'
+            loader: 'sass-loader',
+            query: {
+              sourceMap: false
+            }
           }
         ]
       },
-
       {
-        test: /\.(png|jpg|gif|webp)$/,
+        test: /\.(jpg|png|gif|svg|webp)$/,
+        loader: 'image-webpack-loader',
+        enforce: 'pre'
+      },
+      {
+        test: /\.(jpg|png|gif|webp)$/,
         use: [
           {
             loader: 'file-loader'
@@ -136,7 +156,11 @@ const config = {
         test: /\.woff(2)$/,
         use: [
           {
-            loader: 'file-loader'
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'fonts/'
+            }
           }
         ]
       },
@@ -144,7 +168,11 @@ const config = {
         test: /\.[ot]tf$/,
         use: [
           {
-            loader: 'file-loader'
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'fonts/'
+            }
           }
         ]
       },
@@ -169,6 +197,7 @@ const config = {
       }
     ]
   },
+
   plugins: [
     new StringReplacePlugin(),
     new MiniCssExtractPlugin({
@@ -176,14 +205,14 @@ const config = {
       chunkFilename: 'css/ssr/[id].css',
       ignoreOrder: false
     }),
-    new webpack.DefinePlugin(
-      Object.keys(process.env).reduce(
-        (res, key) => ({ ...res, [key]: JSON.stringify(process.env[key]) }),
-        {
-          APP_VERSION: JSON.stringify(APP_VERSION)
-        }
-      )
-    )
+    new webpack.DefinePlugin({
+      NODE_ENV: 'production',
+      LANDING_URL: process.env.LANDING_URL,
+      IS_PROD: process.env.NODE_ENV === 'production',
+      APP_VERSION: JSON.stringify(APP_VERSION),
+      STRIPE_PUBLIC_KEY: JSON.stringify({ key: process.env.STRIPE_PUBLIC_KEY }),
+      SENTRY_CLIENT_URL: JSON.stringify({ key: process.env.SENTRY_CLIENT_URL })
+    })
   ]
 }
 
