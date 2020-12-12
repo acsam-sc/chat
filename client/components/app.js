@@ -5,7 +5,7 @@ import Body from './body'
 const App = () => {
   return (
     <div className="w-full h-screen flex border shadow bg-white">
-      <Route exact path="/" component={() => <Body />} />
+      <Route exact path="/chat" component={() => <Body />} />
     </div>
   )
 }

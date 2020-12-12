@@ -1,23 +1,24 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Provider } from 'react-redux'
+import { Provider, useSelector } from 'react-redux'
 import { ConnectedRouter } from 'connected-react-router'
 import { Switch, Route, Redirect, StaticRouter } from 'react-router-dom'
 
 import store, { history } from '../redux'
 
-import Home from '../components/home'
-import DummyView from '../components/dummy-view'
 import NotFound from '../components/404'
 import App from '../components/app'
+import RegistrationPage from '../components/registration'
+import LoginPage from '../components/login'
 
 import Startup from './startup'
 
 const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
+  const auth = useSelector((s) => s.auth)
   const func = (props) =>
-    !!rest.user && !!rest.user.name && !!rest.token ? (
-      <Redirect to={{ pathname: '/' }} />
+    !!auth.user && !!auth.token ? (
+      <Redirect to={{ pathname: '/chat' }} />
     ) : (
       <Component {...props} />
     )
@@ -25,8 +26,9 @@ const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
 }
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
+  const auth = useSelector((s) => s.auth)
   const func = (props) =>
-    !!rest.user && !!rest.user.name && !!rest.token ? (
+    !!auth.user && !!auth.token ? (
       <Component {...props} />
     ) : (
       <Redirect
@@ -73,9 +75,11 @@ const RootComponent = (props) => {
       <RouterSelector history={history} location={props.location} context={props.context}>
         <Startup>
           <Switch>
-            <Route exact path="/" component={() => <App />} />
-            <Route exact path="/dashboard" component={() => <Home />} />
-            <PrivateRoute exact path="/hidden-route" component={() => <DummyView />} />
+            {/* <Route exact path="/" component={() => <App />} /> */}
+            {/* <Route exact path="/registration" component={() => <RegistrationPage />} /> */}
+            <PrivateRoute exact path="/chat" component={() => <App />} />
+            <OnlyAnonymousRoute exact path="/registration" component={() => <RegistrationPage />} />
+            <OnlyAnonymousRoute exact path="/login" component={() => <LoginPage />} />
             <Route component={() => <NotFound />} />
           </Switch>
         </Startup>
