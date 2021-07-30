@@ -1,11 +1,17 @@
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUsernameField, updatePasswordField, registerUser } from '../redux/reducers/auth'
+import { updateUsernameField, updatePasswordField, registerUser } from '../redux/reducers/auth.tsx'
 
 const RegistrationPage = () => {
   const dispatch = useDispatch()
   const { username, password, regError } = useSelector((state) => state.auth)
   const [repeatPassword, setRepeatPassword] = useState('')
+  const handleOnKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      dispatch(registerUser(username, password, repeatPassword))
+    }
+  }
 
   return (
     <div className="w-screen h-screen bg-gray-100 flex justify-center items-center">
@@ -22,6 +28,7 @@ const RegistrationPage = () => {
               value={username}
               placeholder="Username"
               onChange={(e) => dispatch(updateUsernameField(e.target.value))}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
           </div>
           <div className="mb-6">
@@ -35,6 +42,7 @@ const RegistrationPage = () => {
               value={password}
               placeholder="******************"
               onChange={(e) => dispatch(updatePasswordField(e.target.value))}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="repeat_password">
               Repeat Password
@@ -46,6 +54,7 @@ const RegistrationPage = () => {
               value={repeatPassword}
               placeholder="******************"
               onChange={(e) => setRepeatPassword(e.target.value)}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
             {regError && <p className="text-red-500 text-xs italic">{regError}</p>}
           </div>

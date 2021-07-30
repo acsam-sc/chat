@@ -9,7 +9,7 @@ const handleJWT = (req, res, next, roles) => {
 
     req.logIn(user, { session: false })
 
-    if (!roles.reduce((acc, role) => acc && user.roles.some(t => t === role), true)) {
+    if (!roles.reduce((acc, role) => acc && user.roles.some((t) => t === role), true)) {
       return res.status(401).json({ status: 401, ...err })
     }
 
@@ -19,7 +19,11 @@ const handleJWT = (req, res, next, roles) => {
 }
 
 const auth = (roles = []) => (req, res, next) => {
-  return passport.authenticate('jwt', { session: true }, handleJWT(req, res, next, roles))(req, res, next)
+  return passport.authenticate('jwt', { session: true }, handleJWT(req, res, next, roles))(
+    req,
+    res,
+    next
+  )
 }
 
 export default auth

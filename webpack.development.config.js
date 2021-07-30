@@ -75,6 +75,12 @@ const config = {
         exclude: /node_modules/
       },
       {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        include: [/client/, /server/],
+        exclude: /node_modules/
+      },
+      {
         test: /\.css$/,
         use: [
           {

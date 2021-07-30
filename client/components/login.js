@@ -1,10 +1,16 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUsernameField, updatePasswordField, signInUser } from '../redux/reducers/auth'
+import { updateUsernameField, updatePasswordField, signInUser } from '../redux/reducers/auth.tsx'
 
 const RegistrationPage = () => {
   const dispatch = useDispatch()
   const { username, password, authError } = useSelector((state) => state.auth)
+  const handleOnKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      dispatch(signInUser())
+    }
+  }
 
   return (
     <div className="w-screen h-screen bg-gray-100 flex justify-center items-center">
@@ -21,6 +27,7 @@ const RegistrationPage = () => {
               value={username}
               placeholder="Username"
               onChange={(e) => dispatch(updateUsernameField(e.target.value))}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
           </div>
           <div className="mb-6">
@@ -34,6 +41,7 @@ const RegistrationPage = () => {
               value={password}
               placeholder="******************"
               onChange={(e) => dispatch(updatePasswordField(e.target.value))}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
             {authError && <p className="text-red-500 text-xs italic">{authError}</p>}
           </div>

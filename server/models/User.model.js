@@ -53,13 +53,13 @@ userSchema.statics = {
 
     const user = await this.findOne({ username }).exec()
     if (!user) {
-      throw new Error('No Such User')
+      throw new Error('Username or Password is Incorrect')
     }
 
     const isPasswordOk = await user.passwordMatches(password)
 
     if (!isPasswordOk) {
-      throw new Error('Password is Incorrect')
+      throw new Error('Username or Password is Incorrect')
     }
 
     return user

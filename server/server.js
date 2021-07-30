@@ -195,6 +195,7 @@ server.get('/api/v1/auth', async (req, res) => {
     const payload = { uid: user.id }
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
+    delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
   } catch (err) {
@@ -214,11 +215,36 @@ server.post('/api/v1/auth', async (req, res) => {
     const payload = { uid: user.id }
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
+    delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
+    // connections.forEach((c) => {
+    //   c.write
+    // })
   } catch (err) {
     console.log(`Error on post '/api/v1/auth': ${err}`)
-    res.json({ status: 'error', err })
+    res.json({ status: 'error', error: err.message })
+  }
+})
+
+server.post('/api/v1/reg', async (req, res) => {
+  console.log('/api/v1/reg request.body', req.body.body)
+  const newUser = JSON.parse(req.body.body)
+  try {
+    const user = new User({
+      username: newUser.username,
+      password: newUser.password
+    })
+    user.save()
+    delete user.password
+    delete user['__v']
+    res.json({ status: 'ok', user })
+    // connections.forEach((c) => {
+    //   c.write
+    // })
+  } catch (err) {
+    console.log(`Error on post '/api/v1/reg': ${err}`)
+    res.json({ status: 'error', error: err.message })
   }
 })
 

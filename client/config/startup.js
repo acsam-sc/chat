@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
-import { trySignIn, tryGetUserInfo } from '../redux/reducers/auth'
+import { trySignIn, tryGetUserInfo } from '../redux/reducers/auth.tsx'
 
 const Startup = (props) => {
   const dispatch = useDispatch()

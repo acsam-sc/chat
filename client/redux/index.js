@@ -32,9 +32,9 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
     }
 
     socket.onmessage = (message) => {
+      store.dispatch(socketActions.message)
       // eslint-disable-next-line no-console
       console.log(message)
-
       // socket.close();
     }
 

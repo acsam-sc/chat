@@ -17,11 +17,7 @@ import Startup from './startup'
 const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
   const auth = useSelector((s) => s.auth)
   const func = (props) =>
-    !!auth.user && !!auth.token ? (
-      <Redirect to={{ pathname: '/chat' }} />
-    ) : (
-      <Component {...props} />
-    )
+    !!auth.user && !!auth.token ? <Redirect to={{ pathname: '/chat' }} /> : <Component {...props} />
   return <Route {...rest} render={func} />
 }
 
@@ -75,7 +71,7 @@ const RootComponent = (props) => {
       <RouterSelector history={history} location={props.location} context={props.context}>
         <Startup>
           <Switch>
-            {/* <Route exact path="/" component={() => <App />} /> */}
+            <Route exact path="/" component={() => <LoginPage />} />
             {/* <Route exact path="/registration" component={() => <RegistrationPage />} /> */}
             <PrivateRoute exact path="/chat" component={() => <App />} />
             <OnlyAnonymousRoute exact path="/registration" component={() => <RegistrationPage />} />
