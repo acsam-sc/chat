@@ -32,7 +32,12 @@ export default (state = initialState, action) => {
     case REGISTER_USER:
       return { ...state, password: '', username: action.username }
     case LOGIN:
-      return { ...state, token: action.payload.token, password: '', username: action.payload.username }
+      return {
+        ...state,
+        token: action.payload.token,
+        password: '',
+        username: action.payload.username
+      }
     default:
       return state
   }
@@ -78,10 +83,9 @@ export const registerUser = (username, password, repeatPassword) => async (dispa
         })
       })
       .then((res) => {
-        if (res.data.status === "error") {
+        if (res.data.status === 'error') {
           dispatch(setRegError(res.data.error))
-        }
-        else {
+        } else {
           dispatch({ type: REGISTER_USER, token: res.data.token, username: res.data.user.username })
           history.push('/login')
         }
@@ -107,10 +111,9 @@ export const signInUser = () => async (dispatch, getState) => {
         })
       })
       .then((res) => {
-        if (res.data.status === "error") {
+        if (res.data.status === 'error') {
           dispatch(setAuthError(res.data.error))
-        }
-        else {
+        } else {
           // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
           dispatch(setLoginCredits(res.data.token, res.data.user.username))
           history.push('/chat')
@@ -122,10 +125,10 @@ export const trySignIn = () => async (dispatch) => {
   axios
     .get('/api/v1/auth')
     .then((res) => {
-    // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
-    dispatch(setLoginCredits(res.data.token, res.data.user.username))
-    history.push('/chat')
-  })
+      // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
+      dispatch(setLoginCredits(res.data.token, res.data.user.username))
+      history.push('/chat')
+    })
     .catch(() => history.push('/login'))
 }
 

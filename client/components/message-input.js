@@ -1,10 +1,6 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { getSocket } from '../redux'
-import sendMessage from '../redux/reducers/msg' 
-
-const socket = getSocket()
-console.log("Socket = ", socket)
+import sendMessage from '../redux/reducers/msg'
 
 const MessageInput = () => {
   const { username } = useSelector((state) => state.auth)

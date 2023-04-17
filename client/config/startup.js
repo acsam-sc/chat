@@ -8,7 +8,6 @@ const Startup = (props) => {
   const token = useSelector((s) => s.auth.token)
   useEffect(() => {
     if (token) {
-      console.log('StartUp')
       dispatch(trySignIn())
       dispatch(tryGetUserInfo())
     }

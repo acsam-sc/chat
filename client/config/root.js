@@ -17,7 +17,11 @@ import Startup from './startup'
 const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
   const auth = useSelector((s) => s.auth)
   const func = (props) =>
-    !!auth.username && !!auth.token ? <Redirect to={{ pathname: '/chat' }} /> : <Component {...props} />
+    !!auth.username && !!auth.token ? (
+      <Redirect to={{ pathname: '/chat' }} />
+    ) : (
+      <Component {...props} />
+    )
   return <Route {...rest} render={func} />
 }
 
