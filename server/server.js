@@ -218,9 +218,9 @@ server.post('/api/v1/auth', async (req, res) => {
     delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
-    // connections.forEach((c) => {
-    //   c.write
-    // })
+    connections.forEach((c) => {
+      c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${user.username} just logged in` }))
+    })
   } catch (err) {
     console.log(`Error on post '/api/v1/auth': ${err}`)
     res.json({ status: 'error', error: err.message })
@@ -288,11 +288,21 @@ server.get('/*', (req, res) => {
 
 const app = server.listen(port)
 
+const broadcast = (data) => {
+  connections.forEach((c) => {
+    const parsedData = JSON.parse(data)
+      c.write(`message from ${parsedData.username}: ${parsedData.message}`)
+    })
+}
+
 if (config.isSocketsEnabled) {
   const echo = sockjs.createServer()
   echo.on('connection', (conn) => {
     connections.push(conn)
-    conn.on('data', async () => {})
+    console.log('connections.push', connections)
+    conn.on('data', (data) => {
+      broadcast(data)
+    })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)

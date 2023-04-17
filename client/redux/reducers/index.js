@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux'
 import { connectRouter } from 'connected-react-router'
-import auth from './auth.tsx'
+import auth from './auth'
 
 const createRootReducer = (history) =>
   combineReducers({

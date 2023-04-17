@@ -1,8 +1,8 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUsernameField, updatePasswordField, signInUser } from '../redux/reducers/auth.tsx'
+import { updateUsernameField, updatePasswordField, signInUser } from '../redux/reducers/auth'
 
-const RegistrationPage = () => {
+const LoginPage = () => {
   const dispatch = useDispatch()
   const { username, password, authError } = useSelector((state) => state.auth)
   const handleOnKeyPress = (event) => {
@@ -60,4 +60,4 @@ const RegistrationPage = () => {
   )
 }
 
-export default RegistrationPage
+export default LoginPage

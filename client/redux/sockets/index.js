@@ -7,6 +7,10 @@ export default {
     type: 'MESSAGE_RECEIVED',
     data
   }),
+  showMessage: (data) => ({
+    type: 'SHOW_MESSAGE',
+    data
+  }),
   disconnected: (data) => ({
     type: 'SOCKET_DISCONNECTED',
     data

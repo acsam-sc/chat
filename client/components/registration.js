@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUsernameField, updatePasswordField, registerUser } from '../redux/reducers/auth.tsx'
+import { updateUsernameField, updatePasswordField, registerUser } from '../redux/reducers/auth'
 
 const RegistrationPage = () => {
   const dispatch = useDispatch()

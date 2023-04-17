@@ -11,26 +11,15 @@ const LOGIN = 'auth/LOGIN'
 
 const cookies = new Cookies()
 
-type UserType = {
-  roles: Array<string>,
-  createdAt: Date,
-  _id: string,
-  username: string,
-  password: string
-}
-
 const initialState = {
-  username: '' as string,
-  password: '' as string,
-  regError: null as null | string,
-  authError: null as null | string,
-  token: cookies.get('token'),
-  user: {} as UserType
+  username: '',
+  password: '',
+  regError: null,
+  authError: null,
+  token: cookies.get('token')
 }
 
-type InitialState = typeof initialState
-
-export default (state = initialState, action: any): InitialState => {
+export default (state = initialState, action) => {
   switch (action.type) {
     case UPDATE_USERNAME:
       return { ...state, username: action.payload }
@@ -41,47 +30,35 @@ export default (state = initialState, action: any): InitialState => {
     case SET_AUTH_ERROR:
       return { ...state, authError: action.payload }
     case REGISTER_USER:
-      return { ...state, password: '', user: action.user }
+      return { ...state, password: '', username: action.username }
     case LOGIN:
-      return { ...state, token: action.token, password: '', user: action.user }
+      return { ...state, token: action.payload.token, password: '', username: action.payload.username }
     default:
       return state
   }
 }
 
-type UpdateUsernameFieldActionType = {
-  type: typeof UPDATE_USERNAME,
-  payload: string
-}
-export const updateUsernameField = (username: string): UpdateUsernameFieldActionType => {
+export const updateUsernameField = (username) => {
   return { type: UPDATE_USERNAME, payload: username }
 }
 
-type UpdatePasswordFieldActionType = {
-  type: typeof UPDATE_PASSWORD,
-  payload: string
-}
-export const updatePasswordField = (password: string): UpdatePasswordFieldActionType => {
+export const updatePasswordField = (password) => {
   return { type: UPDATE_PASSWORD, payload: password }
 }
 
-type SetAuthErrorActionType = {
-  type: typeof SET_AUTH_ERROR,
-  payload: null | string
-}
-export const setAuthError = (authError: null | string): SetAuthErrorActionType => {
+export const setAuthError = (authError) => {
   return { type: SET_AUTH_ERROR, payload: authError }
 }
 
-type SetRegErrorActionType = {
-  type: typeof SET_REG_ERROR,
-  payload: null | string
-}
-export const setRegError = (regError: null | string): SetRegErrorActionType => {
+export const setRegError = (regError) => {
   return { type: SET_REG_ERROR, payload: regError }
 }
 
-export const registerUser = (username: string, password: string, repeatPassword: string) => async (dispatch: any) => {
+export const setLoginCredits = (token, username) => {
+  return { type: LOGIN, payload: { token, username } }
+}
+
+export const registerUser = (username, password, repeatPassword) => async (dispatch) => {
   dispatch(setRegError(null))
   if (!username) {
     dispatch(setRegError('Username cannot be empty'))
@@ -100,18 +77,18 @@ export const registerUser = (username: string, password: string, repeatPassword:
           password
         })
       })
-      .then((res: any) => {
+      .then((res) => {
         if (res.data.status === "error") {
           dispatch(setRegError(res.data.error))
         }
         else {
-          dispatch({ type: REGISTER_USER, token: res.data.token, user: res.data.user })
+          dispatch({ type: REGISTER_USER, token: res.data.token, username: res.data.user.username })
           history.push('/login')
         }
       })
 }
 
-export const signInUser = () => async (dispatch: any, getState: any) => {
+export const signInUser = () => async (dispatch, getState) => {
   const { username, password } = getState().auth
   dispatch(setAuthError(null))
   if (!username) {
@@ -129,25 +106,27 @@ export const signInUser = () => async (dispatch: any, getState: any) => {
           password
         })
       })
-      .then((res: any) => {
+      .then((res) => {
         if (res.data.status === "error") {
           dispatch(setAuthError(res.data.error))
         }
         else {
-          dispatch({ type: LOGIN, token: res.data.token, user: res.data.user })
+          // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
+          dispatch(setLoginCredits(res.data.token, res.data.user.username))
           history.push('/chat')
         }
       })
 }
 
-export const trySignIn = () => async (dispatch: any) => {
+export const trySignIn = () => async (dispatch) => {
   axios
     .get('/api/v1/auth')
     .then((res) => {
-    dispatch({ type: LOGIN, token: res.data.token, user: res.data.user })
+    // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
+    dispatch(setLoginCredits(res.data.token, res.data.user.username))
     history.push('/chat')
   })
-    .catch((err) => history.push('/login'))
+    .catch(() => history.push('/login'))
 }
 
 export const tryGetUserInfo = () => async () => {

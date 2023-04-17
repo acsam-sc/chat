@@ -1,10 +1,21 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
+import { useSelector } from 'react-redux'
+import { getSocket } from '../redux'
+import sendMessage from '../redux/reducers/msg' 
+
+const socket = getSocket()
+console.log("Socket = ", socket)
 
 const MessageInput = () => {
+  const { username } = useSelector((state) => state.auth)
   const [messageText, setMessageText] = useState('')
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
-      console.log('Message to send:', messageText)
+      sendMessage({
+        username,
+        message: messageText
+      })
+      setMessageText('')
     }
   }
 
@@ -17,7 +28,7 @@ const MessageInput = () => {
         value={messageText}
         placeholder="Message to #general"
         onChange={(e) => setMessageText(e.target.value)}
-        onKeyPress={(e) => handleKeyPress(e)}
+        onKeyDown={(e) => handleKeyPress(e)}
       />
     </div>
   )
