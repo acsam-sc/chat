@@ -89,7 +89,7 @@ export const registerUser = (username, password, repeatPassword) => async (dispa
           dispatch(setRegError(res.data.error))
         } else {
           dispatch({ type: REGISTER_USER, token: res.data.token, username: res.data.user.username })
-          sendMessage({ type: 'UPDATE_USER', username })
+          // sendMessage({ type: 'WELCOME_MESSAGE', username })
           history.push('/login')
         }
       })
@@ -118,7 +118,7 @@ export const signInUser = () => async (dispatch, getState) => {
           dispatch(setAuthError(res.data.error))
         } else {
           dispatch(setLoginCredits(res.data.token, res.data.user.username))
-          sendMessage({ type: 'UPDATE_USER', username })
+          sendMessage({ type: 'WELCOME_MESSAGE', username })
           history.push('/chat')
         }
       })
@@ -129,7 +129,7 @@ export const trySignIn = () => (dispatch) => {
     .get('/api/v1/auth')
     .then((res) => {
       dispatch(setLoginCredits(res.data.token, res.data.user.username))
-      sendMessage({ type: 'UPDATE_USER', username: res.data.user.username })
+      sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username })
       history.push('/chat')
     })
     .catch(() => history.push('/login'))

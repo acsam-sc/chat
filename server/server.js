@@ -19,8 +19,6 @@ import Html from '../client/html'
 
 mongooseService.connect()
 
-const { readFile, writeFile, unlink } = require('fs').promises
-
 const Root = () => ''
 
 try {
@@ -40,58 +38,11 @@ try {
 }
 
 let connections = []
+let connectedUsers = []
 
 const port = process.env.PORT || 8090
 const server = express()
 
-const goodsFile = `${__dirname}/goods.json`
-const logFile = `${__dirname}/logs.json`
-
-const writeGoodsFile = async (data) =>
-  writeFile(goodsFile, JSON.stringify(data), { encoding: 'utf8' })
-
-const readGoodsFile = async () => {
-  const fileData = await readFile(goodsFile, { encoding: 'utf-8' })
-    .then((data) => JSON.parse(data))
-    .catch(async (err) => {
-      if (err.code === 'ENOENT') {
-        const resData = await axios(
-          'https://raw.githubusercontent.com/ovasylenko/skillcrcuial-ecommerce-test-data/master/data.json'
-        )
-          .then(({ data }) => {
-            writeGoodsFile(data)
-            return data
-          })
-          // eslint-disable-next-line no-console
-          .catch((errAxios) => console.log(`Error in axios: ${errAxios}`))
-        return resData
-      }
-      return err
-    })
-  return fileData
-}
-
-const readLogFile = async () => {
-  const fileData = await readFile(logFile, { encoding: 'utf8' })
-    .then((data) => JSON.parse(data))
-    .catch(async (err) => {
-      if (err.code === 'ENOENT') {
-        const dataToWrite = [{ date: +new Date(), action: '===== Log start =====' }]
-        await writeFile(logFile, JSON.stringify(dataToWrite), { encoding: 'utf8' })
-        return dataToWrite
-      }
-      return err
-    })
-  return fileData
-}
-
-// const writeLogFile = async (action) => {
-//   const fileData = await readLogFile()
-//   const dataToWrite = fileData.concat({ date: +new Date(), action })
-//   await writeFile(logFile, JSON.stringify(dataToWrite), { encoding: 'utf8' })
-// }
-
-const deleteLogFile = async () => unlink(logFile)
 
 const middleware = [
   cors(),
@@ -113,79 +64,11 @@ server.get('/api/v1/exchangerate', async (req, res) => {
   res.json(data.data)
 })
 
-server.get('/api/v1/products', async (req, res) => {
-  const { page = 1, count = 20 } = req.query
-  const data = await readGoodsFile()
-  const compareAZ = (a, b) => {
-    if (a.title < b.title) return -1
-    if (a.title > b.title) return 1
-    return 0
-  }
+  // const portionToSend = sortedItems().slice((page - 1) * count, page * count)
 
-  const compareZA = (a, b) => {
-    if (a.title > b.title) return -1
-    if (a.title < b.title) return 1
-    return 0
-  }
 
-  const sortAZ = () => {
-    const titlesArray = data
-      .map((it, index) => {
-        return { index, title: it.title }
-      })
-      .sort(compareAZ)
-    return titlesArray.map((it) => data[it.index])
-  }
-
-  const sortZA = () => {
-    const titlesArray = data
-      .map((it, index) => {
-        return { index, title: it.title }
-      })
-      .sort(compareZA)
-    return titlesArray.map((it) => data[it.index])
-  }
-
-  const sortByPriceLowHigh = () => {
-    const pricesArray = data
-      .map((it, index) => {
-        return { index, price: it.price }
-      })
-      .sort((a, b) => a.price - b.price)
-    return pricesArray.map((it) => data[it.index])
-  }
-
-  const sortByPriceHighLow = () => {
-    const pricesArray = data
-      .map((it, index) => {
-        return { index, price: it.price }
-      })
-      .sort((a, b) => b.price - a.price)
-    return pricesArray.map((it) => data[it.index])
-  }
-
-  const sortedItems = () => {
-    switch (req.query.sortby) {
-      case 'a-z':
-        return sortAZ()
-      case 'z-a':
-        return sortZA()
-      case 'priceAsc':
-        return sortByPriceLowHigh()
-      case 'priceDesc':
-        return sortByPriceHighLow()
-      default:
-        return data
-    }
-  }
-
-  const portionToSend = sortedItems().slice((page - 1) * count, page * count)
-  res.json({ items: portionToSend, totalCount: data.length })
-})
-
-server.get('/api/v1/logs', async (req, res) => {
-  const response = await readLogFile()
-  res.json(response)
+server.get('/api/v1/messages', async (req, res) => {
+  
 })
 
 server.get('/api/v1/auth', async (req, res) => {
@@ -198,9 +81,6 @@ server.get('/api/v1/auth', async (req, res) => {
     delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
-    // connections.forEach((c) => {
-    //   c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${user.username} just logged in` }))
-    // })
   } catch (err) {
     console.log(`Error on get '/api/v1/auth': ${err}`)
     res.json({ status: 'error', err })
@@ -221,10 +101,6 @@ server.post('/api/v1/auth', async (req, res) => {
     delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
-    connections.forEach((c) => {
-      // c.write(JSON.stringify({ type: 'USER_INFO', user: user.username, id: user.id }))
-      c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${user.username} just logged in` }))
-    })
   } catch (err) {
     console.log(`Error on post '/api/v1/auth': ${err}`)
     res.json({ status: 'error', error: err.message })
@@ -243,9 +119,6 @@ server.post('/api/v1/reg', async (req, res) => {
     delete user.password
     delete user['__v']
     res.json({ status: 'ok', user })
-    // connections.forEach((c) => {
-    //   c.write
-    // })
   } catch (err) {
     console.log(`Error on post '/api/v1/reg': ${err}`)
     res.json({ status: 'error', error: err.message })
@@ -302,19 +175,31 @@ if (config.isSocketsEnabled) {
   const echo = sockjs.createServer()
   echo.on('connection', (conn) => {
     connections.push(conn)
-    conn.write(JSON.stringify({ type: 'WELCOME_MESSAGE', connId: conn.id }))
-    console.log('connections.push', connections)
     
     conn.on('data', (data) => {
       const parsedData = JSON.parse(data)
-      // console.log('conn.on data', parsedData)
       if (parsedData.type === 'SHOW_MESSAGE') broadcast(parsedData)
-      // console.log('parsedData', parsedData)
-      if (parsedData.type === 'WELCOME_MESSAGE') console.log(`connectionID ${conn.id} is assigned to user ${parsedData.username}`)
+      if (parsedData.type === 'WELCOME_MESSAGE' &&
+        parsedData.username &&
+        (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
+          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
+          connections.forEach((c) => {
+            c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${parsedData.username} just logged in` }))
+          })
+        }
     })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
+      connectedUsers = connectedUsers.filter(it => {
+        if (it.connID === conn.id) {
+          connections.forEach((c) => {
+            c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${it.username} just logged out` }))
+          })
+          return false
+        }
+        return true
+      })
     })
   })
   echo.installHandlers(app, { prefix: '/ws' })

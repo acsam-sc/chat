@@ -34,7 +34,6 @@ const store = createStore(rootReducer(history), initialState, composedEnhancers)
 
     socket.onmessage = (message) => {
       // const parsedData = JSON.parse(data)
-      // if (parsedData.type === 'WELCOME_MESSAGE') conn.write(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
       // store.dispatch(socketActions.message)
       // socket.send(message)
       // eslint-disable-next-line no-console
