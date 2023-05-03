@@ -1,6 +1,8 @@
 import axios from 'axios'
 import Cookies from 'universal-cookie'
 import { history } from '..'
+import sendMessage from './msg'
+
 
 const UPDATE_USERNAME = 'auth/UPDATE_USERNAME'
 const UPDATE_PASSWORD = 'auth/UPDATE_PASSWORD'
@@ -87,6 +89,7 @@ export const registerUser = (username, password, repeatPassword) => async (dispa
           dispatch(setRegError(res.data.error))
         } else {
           dispatch({ type: REGISTER_USER, token: res.data.token, username: res.data.user.username })
+          sendMessage({ type: 'UPDATE_USER', username })
           history.push('/login')
         }
       })
@@ -114,19 +117,19 @@ export const signInUser = () => async (dispatch, getState) => {
         if (res.data.status === 'error') {
           dispatch(setAuthError(res.data.error))
         } else {
-          // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
           dispatch(setLoginCredits(res.data.token, res.data.user.username))
+          sendMessage({ type: 'UPDATE_USER', username })
           history.push('/chat')
         }
       })
 }
 
-export const trySignIn = () => async (dispatch) => {
+export const trySignIn = () => (dispatch) => {
   axios
     .get('/api/v1/auth')
     .then((res) => {
-      // dispatch({ type: LOGIN, token: res.data.token, username: res.data.user.username })
       dispatch(setLoginCredits(res.data.token, res.data.user.username))
+      sendMessage({ type: 'UPDATE_USER', username: res.data.user.username })
       history.push('/chat')
     })
     .catch(() => history.push('/login'))

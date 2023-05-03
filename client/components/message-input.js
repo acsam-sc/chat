@@ -8,6 +8,7 @@ const MessageInput = () => {
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
       sendMessage({
+        type: 'SHOW_MESSAGE',
         username,
         message: messageText
       })

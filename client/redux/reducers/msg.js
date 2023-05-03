@@ -1,6 +1,4 @@
-import { getSocket } from '..'
-
-const socket = getSocket()
+import { socket } from '../index'
 
 const sendMessage = (data) => {
   socket.send(JSON.stringify(data))

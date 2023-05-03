@@ -198,6 +198,9 @@ server.get('/api/v1/auth', async (req, res) => {
     delete user['__v']
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
+    // connections.forEach((c) => {
+    //   c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${user.username} just logged in` }))
+    // })
   } catch (err) {
     console.log(`Error on get '/api/v1/auth': ${err}`)
     res.json({ status: 'error', err })
@@ -219,6 +222,7 @@ server.post('/api/v1/auth', async (req, res) => {
     res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
     connections.forEach((c) => {
+      // c.write(JSON.stringify({ type: 'USER_INFO', user: user.username, id: user.id }))
       c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${user.username} just logged in` }))
     })
   } catch (err) {
@@ -290,18 +294,23 @@ const app = server.listen(port)
 
 const broadcast = (data) => {
   connections.forEach((c) => {
-    const parsedData = JSON.parse(data)
-      c.write(`message from ${parsedData.username}: ${parsedData.message}`)
-    })
+    c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `message from ${data.username} message: ${data.message}` }))
+  })
 }
 
 if (config.isSocketsEnabled) {
   const echo = sockjs.createServer()
   echo.on('connection', (conn) => {
     connections.push(conn)
+    conn.write(JSON.stringify({ type: 'WELCOME_MESSAGE', connId: conn.id }))
     console.log('connections.push', connections)
+    
     conn.on('data', (data) => {
-      broadcast(data)
+      const parsedData = JSON.parse(data)
+      // console.log('conn.on data', parsedData)
+      if (parsedData.type === 'SHOW_MESSAGE') broadcast(parsedData)
+      // console.log('parsedData', parsedData)
+      if (parsedData.type === 'WELCOME_MESSAGE') console.log(`connectionID ${conn.id} is assigned to user ${parsedData.username}`)
     })
 
     conn.on('close', () => {

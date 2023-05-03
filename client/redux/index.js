@@ -21,35 +21,37 @@ const composeFunc = process.env.NODE_ENV === 'development' ? composeWithDevTools
 const composedEnhancers = composeFunc(applyMiddleware(...middleware), ...enhancers)
 
 const store = createStore(rootReducer(history), initialState, composedEnhancers)
-let socket
 
-if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
-  const initSocket = () => {
-    socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
+// if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
+  // const initSocket = () => {
+    console.log('initSocket')
+    export const socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
 
     socket.onopen = () => {
+      socket.send(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
       store.dispatch(socketActions.connected)
     }
 
     socket.onmessage = (message) => {
+      // const parsedData = JSON.parse(data)
+      // if (parsedData.type === 'WELCOME_MESSAGE') conn.write(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
       // store.dispatch(socketActions.message)
       // socket.send(message)
       // eslint-disable-next-line no-console
-      console.log('socket.onmessage', message)
+      console.log('socket.onmessage', JSON.parse(message.data))
       // socket.close();
     }
 
     socket.onclose = () => {
       store.dispatch(socketActions.disconnected)
       setTimeout(() => {
-        initSocket()
+        // initSocket()
       }, 2000)
     }
-  }
+  // }
 
-  initSocket()
-}
-export function getSocket() {
-  return socket
-}
+  // initSocket()
+// }
+
+
 export default store
