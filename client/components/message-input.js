@@ -1,17 +1,24 @@
 import React, { useState } from 'react'
-import { useSelector } from 'react-redux'
-import sendMessage from '../redux/reducers/msg'
+import { useSelector, useDispatch } from 'react-redux'
+import { sendMessage } from '../redux/reducers/msg'
 
-const MessageInput = () => {
+const MessageInput = (props) => {
+  const dispatch = useDispatch()
   const { username } = useSelector((state) => state.auth)
   const [messageText, setMessageText] = useState('')
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
-      sendMessage({
-        type: 'SHOW_MESSAGE',
-        username,
-        message: messageText
-      })
+      const timestamp = Date.now()
+      dispatch(
+        sendMessage({
+          type: 'SHOW_MESSAGE',
+          channel: '#general',
+          messageID: timestamp + props.latestIndex,
+          timestamp,
+          username,
+          message: messageText
+        })
+      )
       setMessageText('')
     }
   }

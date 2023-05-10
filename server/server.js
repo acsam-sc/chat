@@ -165,9 +165,9 @@ server.get('/*', (req, res) => {
 
 const app = server.listen(port)
 
-const broadcast = (data) => {
+const broadcastUserMessage = (data, id) => {
   connections.forEach((c) => {
-    c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `message from ${data.username} message: ${data.message}` }))
+    if (c.id !== id) c.write(JSON.stringify(data))
   })
 }
 
@@ -177,24 +177,41 @@ if (config.isSocketsEnabled) {
     connections.push(conn)
     
     conn.on('data', (data) => {
-      const parsedData = JSON.parse(data)
-      if (parsedData.type === 'SHOW_MESSAGE') broadcast(parsedData)
+      const timestamp = Date.now()
+      // const parsedData = JSON.parse(data)
+      console.log('parsedData', parsedData)
+      if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
       if (parsedData.type === 'WELCOME_MESSAGE' &&
         parsedData.username &&
         (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
           connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
           connections.forEach((c) => {
-            c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${parsedData.username} just logged in` }))
+            c.write(JSON.stringify({
+              type: 'SHOW_MESSAGE',
+              channel: 'ALL',
+              messageID: timestamp,
+              timestamp,
+              username: 'ChatInfo',
+              message: `${parsedData.username} just logged in`
+            }))
           })
         }
     })
 
     conn.on('close', () => {
+      const timestamp = Date.now()
       connections = connections.filter((c) => c.readyState !== 3)
       connectedUsers = connectedUsers.filter(it => {
         if (it.connID === conn.id) {
           connections.forEach((c) => {
-            c.write(JSON.stringify({ type: 'SHOW_MESSAGE', message: `${it.username} just logged out` }))
+            c.write(JSON.stringify({
+              type: 'SHOW_MESSAGE',
+              channel: 'ALL',
+              messageID: timestamp,
+              timestamp,
+              username: 'ChatInfo',
+              message: `${it.username} just logged out`
+            }))
           })
           return false
         }

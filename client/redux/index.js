@@ -6,7 +6,8 @@ import SockJS from 'sockjs-client'
 
 import rootReducer from './reducers'
 import createHistory from './history'
-import socketActions from './sockets'
+import { addSocketToState } from './reducers/socket'
+import { addMessage } from './reducers/msg'
 
 export const history = createHistory()
 
@@ -22,35 +23,35 @@ const composedEnhancers = composeFunc(applyMiddleware(...middleware), ...enhance
 
 const store = createStore(rootReducer(history), initialState, composedEnhancers)
 
-// if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
-  // const initSocket = () => {
+if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
+  const initSocket = () => {
     console.log('initSocket')
-    export const socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
+    const socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
+    store.dispatch(addSocketToState(socket))
 
     socket.onopen = () => {
-      socket.send(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
-      store.dispatch(socketActions.connected)
+      // socket.send(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
+      // store.dispatch(addSocketToState(socket))
     }
 
     socket.onmessage = (message) => {
-      // const parsedData = JSON.parse(data)
-      // store.dispatch(socketActions.message)
+      const parsedData = JSON.parse(message.data)
+      store.dispatch(addMessage(parsedData))
       // socket.send(message)
       // eslint-disable-next-line no-console
-      console.log('socket.onmessage', JSON.parse(message.data))
+      // console.log('socket.onmessage', JSON.parse(message.data))
       // socket.close();
     }
 
     socket.onclose = () => {
-      store.dispatch(socketActions.disconnected)
+      // store.dispatch(socketActions.disconnected)
       setTimeout(() => {
-        // initSocket()
+        initSocket()
       }, 2000)
     }
-  // }
+  }
 
-  // initSocket()
-// }
-
+  initSocket()
+}
 
 export default store

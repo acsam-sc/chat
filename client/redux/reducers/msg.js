@@ -1,21 +1,37 @@
-import { socket } from '../index'
+const ADD_MESSAGE = 'msg/ADD_MESSAGE'
 
-const sendMessage = (data) => {
-  socket.send(JSON.stringify(data))
+const initialState = {
+  messages: []
 }
 
-// const initialState = {
-//   username: '',
-//   message: ''
-// }
+const isSocketReady = (socket, callback) => {
+  setTimeout(() => {
+    if (socket.readyState === 1) {
+      if (callback !== null) {
+        callback()
+      }
+    } else {
+      isSocketReady(socket, callback)
+    }
+  }, 500)
+}
 
-// export default (state = initialState, action) => {
-//   switch (action.type) {
-//     case UPDATE_MESSAGE_TO_SEND:
-//       return { ...state, username: action.payload }
-//     default:
-//       return state
-//   }
-// }
+export default (state = initialState, action) => {
+  switch (action.type) {
+    case ADD_MESSAGE:
+      // console.log('ADD_MESSAGE', { ...state, messages: [ ...state.messages, action.payload ] })
+      return { ...state, messages: [...state.messages, action.payload] }
+    default:
+      return state
+  }
+}
 
-export default sendMessage
+export const addMessage = (message) => {
+  return { type: ADD_MESSAGE, payload: message }
+}
+
+export const sendMessage = (data) => (dispatch, getState) => {
+  if (data.message) dispatch(addMessage(data))
+  const { socket } = getState().socket
+  isSocketReady(socket, () => socket.send(JSON.stringify(data)))
+}

@@ -1,8 +1,7 @@
 import axios from 'axios'
 import Cookies from 'universal-cookie'
 import { history } from '..'
-import sendMessage from './msg'
-
+import { sendMessage } from './msg'
 
 const UPDATE_USERNAME = 'auth/UPDATE_USERNAME'
 const UPDATE_PASSWORD = 'auth/UPDATE_PASSWORD'
@@ -74,7 +73,7 @@ export const registerUser = (username, password, repeatPassword) => async (dispa
   } else if (password !== repeatPassword) {
     dispatch(setRegError('Passwords do not match'))
   } else
-    axios
+    await axios
       .post('/api/v1/reg', {
         headers: {
           'Content-Type': 'application/json'
@@ -103,7 +102,7 @@ export const signInUser = () => async (dispatch, getState) => {
   } else if (!password) {
     dispatch(setAuthError('Password cannot be empty'))
   } else
-    axios
+    await axios
       .post('/api/v1/auth', {
         headers: {
           'Content-Type': 'application/json'
@@ -118,25 +117,27 @@ export const signInUser = () => async (dispatch, getState) => {
           dispatch(setAuthError(res.data.error))
         } else {
           dispatch(setLoginCredits(res.data.token, res.data.user.username))
-          sendMessage({ type: 'WELCOME_MESSAGE', username })
+          dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
           history.push('/chat')
         }
       })
 }
 
-export const trySignIn = () => (dispatch) => {
-  axios
+export const trySignIn = () => async (dispatch) => {
+  console.log('Trying SignIn')
+  await axios
     .get('/api/v1/auth')
     .then((res) => {
       dispatch(setLoginCredits(res.data.token, res.data.user.username))
-      sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username })
+      dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username }))
+      // sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username })
       history.push('/chat')
     })
     .catch(() => history.push('/login'))
 }
 
 export const tryGetUserInfo = () => async () => {
-  axios.get('/api/v1/user-info').then((res) => {
+  await axios.get('/api/v1/user-info').then((res) => {
     console.log('tryGetUserInfo', res.data)
   })
 }
