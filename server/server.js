@@ -88,7 +88,7 @@ server.get('/api/v1/auth', async (req, res) => {
 })
 
 server.get('/api/v1/user-info', auth([]), async (req, res) => {
-  res.json({ status: 'user-info' })  
+  res.json({ status: 'ok', onlineUsers: connectedUsers.map((it) => it.username) })
 })
 
 server.post('/api/v1/auth', async (req, res) => {
@@ -178,8 +178,8 @@ if (config.isSocketsEnabled) {
     
     conn.on('data', (data) => {
       const timestamp = Date.now()
-      // const parsedData = JSON.parse(data)
-      console.log('parsedData', parsedData)
+      const parsedData = JSON.parse(data)
+      // console.log('parsedData', parsedData)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
       if (parsedData.type === 'WELCOME_MESSAGE' &&
         parsedData.username &&
@@ -187,12 +187,11 @@ if (config.isSocketsEnabled) {
           connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
           connections.forEach((c) => {
             c.write(JSON.stringify({
-              type: 'SHOW_MESSAGE',
-              channel: 'ALL',
+              type: 'USER_LOGIN',
               messageID: timestamp,
               timestamp,
-              username: 'ChatInfo',
-              message: `${parsedData.username} just logged in`
+              username: parsedData.username
+              // message: `${parsedData.username} just logged in`
             }))
           })
         }
@@ -205,12 +204,11 @@ if (config.isSocketsEnabled) {
         if (it.connID === conn.id) {
           connections.forEach((c) => {
             c.write(JSON.stringify({
-              type: 'SHOW_MESSAGE',
-              channel: 'ALL',
+              type: 'USER_LOGOUT',
               messageID: timestamp,
               timestamp,
-              username: 'ChatInfo',
-              message: `${it.username} just logged out`
+              username: it.username
+              // message: `${it.username} just logged out`
             }))
           })
           return false

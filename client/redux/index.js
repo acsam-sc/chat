@@ -7,7 +7,7 @@ import SockJS from 'sockjs-client'
 import rootReducer from './reducers'
 import createHistory from './history'
 import { addSocketToState } from './reducers/socket'
-import { addMessage } from './reducers/msg'
+import { newMessage } from './reducers/msg'
 
 export const history = createHistory()
 
@@ -30,13 +30,14 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
     store.dispatch(addSocketToState(socket))
 
     socket.onopen = () => {
-      // socket.send(JSON.stringify({ type: 'WELCOME_MESSAGE', username: store.getState().auth.username }))
       // store.dispatch(addSocketToState(socket))
     }
 
     socket.onmessage = (message) => {
       const parsedData = JSON.parse(message.data)
-      store.dispatch(addMessage(parsedData))
+      // console.log('socket.onmessage', parsedData)
+      store.dispatch(newMessage(parsedData))
+      // store.dispatch(parsedData)
       // socket.send(message)
       // eslint-disable-next-line no-console
       // console.log('socket.onmessage', JSON.parse(message.data))

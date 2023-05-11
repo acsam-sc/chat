@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-// import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 import { trySignIn, tryGetUserInfo } from '../redux/reducers/auth'
 

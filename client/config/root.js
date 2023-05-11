@@ -68,8 +68,8 @@ const RouterSelector = (props) =>
 const RootComponent = (props) => {
   return (
     <Provider store={store}>
-      <RouterSelector history={history} location={props.location} context={props.context}>
-        <Startup>
+      <Startup>
+        <RouterSelector history={history} location={props.location} context={props.context}>
           <Switch>
             <Route exact path="/" component={() => <LoginPage />} />
             <PrivateRoute exact path="/chat" component={() => <App />} />
@@ -77,8 +77,8 @@ const RootComponent = (props) => {
             <OnlyAnonymousRoute exact path="/login" component={() => <LoginPage />} />
             <Route component={() => <NotFound />} />
           </Switch>
-        </Startup>
-      </RouterSelector>
+        </RouterSelector>
+      </Startup>
     </Provider>
   )
 }

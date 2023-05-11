@@ -1,7 +1,7 @@
 import axios from 'axios'
 import Cookies from 'universal-cookie'
 import { history } from '..'
-import { sendMessage } from './msg'
+import { sendMessage, userLogIn } from './msg'
 
 const UPDATE_USERNAME = 'auth/UPDATE_USERNAME'
 const UPDATE_PASSWORD = 'auth/UPDATE_PASSWORD'
@@ -136,8 +136,9 @@ export const trySignIn = () => async (dispatch) => {
     .catch(() => history.push('/login'))
 }
 
-export const tryGetUserInfo = () => async () => {
+export const tryGetUserInfo = () => async (dispatch) => {
   await axios.get('/api/v1/user-info').then((res) => {
-    console.log('tryGetUserInfo', res.data)
+    console.log('tryGetUserInfo', res.data.onlineUsers)
+    res.data.onlineUsers.map((it) => dispatch(userLogIn({ username: it })))
   })
 }
