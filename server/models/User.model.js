@@ -8,13 +8,17 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
+    password: {
+      type: String,
+      required: true
+    },
     roles: {
       type: [String],
       default: ['user']
     },
-    password: {
-      type: String,
-      required: true
+    userpic: {
+      data: Buffer,
+      contentType: String
     },
     createdAt: {
       type: Date,
@@ -36,14 +40,12 @@ userSchema.pre('save', async function (next) {
 
 userSchema.method({
   passwordMatches(password) {
-    console.log(bcrypt.hashSync(password), this.password)
     return bcrypt.compareSync(password, this.password)
   }
 })
 
 userSchema.statics = {
   async findAndValidateUser({ username, password }) {
-    console.log('model username', username, 'model password', password)
     if (!username) {
       throw new Error('No Username')
     }

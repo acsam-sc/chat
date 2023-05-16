@@ -6,8 +6,8 @@ import SockJS from 'sockjs-client'
 
 import rootReducer from './reducers'
 import createHistory from './history'
-import { addSocketToState } from './reducers/socket'
-import { newMessage } from './reducers/msg'
+import { addSocketToState, removeSocketFromState } from './reducers/socket'
+import { newMessageReceived } from './reducers/msg'
 
 export const history = createHistory()
 
@@ -36,7 +36,7 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
     socket.onmessage = (message) => {
       const parsedData = JSON.parse(message.data)
       // console.log('socket.onmessage', parsedData)
-      store.dispatch(newMessage(parsedData))
+      store.dispatch(newMessageReceived(parsedData))
       // store.dispatch(parsedData)
       // socket.send(message)
       // eslint-disable-next-line no-console
@@ -45,7 +45,7 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
     }
 
     socket.onclose = () => {
-      // store.dispatch(socketActions.disconnected)
+      store.dispatch(removeSocketFromState())
       setTimeout(() => {
         initSocket()
       }, 2000)

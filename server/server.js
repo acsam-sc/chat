@@ -1,11 +1,13 @@
 import express from 'express'
 import path from 'path'
+import fs from 'fs'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
 import { renderToStaticNodeStream } from 'react-dom/server'
 import React from 'react'
 import axios from 'axios'
+import formidable from 'express-formidable'
 
 import cookieParser from 'cookie-parser'
 import passport from 'passport'
@@ -56,6 +58,7 @@ const middleware = [
 passport.use('jwt', passportJWT.jwt)
 
 middleware.forEach((it) => server.use(it))
+// server.use('/api/v1/auth', formidable())
 
 server.get('/api/v1/exchangerate', async (req, res) => {
   const data = await axios.get(
@@ -107,18 +110,26 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', async (req, res) => {
-  console.log('/api/v1/reg request.body', req.body.body)
-  const newUser = JSON.parse(req.body.body)
+server.post('/api/v1/reg', formidable(), async (req, res) => {
+  const { username, password } = req.fields
+  const userpicFile = {
+    data: fs.readFileSync(req.files.userpic.path),
+    contentType: req.files.userpic.type
+  }
   try {
     const user = new User({
-      username: newUser.username,
-      password: newUser.password
+      username,
+      password,
+      userpic: userpicFile
     })
     user.save()
+    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
     delete user.password
     delete user['__v']
-    res.json({ status: 'ok', user })
+    const payload = { uid: user.id }
+    const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
+    res.json({ status: 'ok', token, user })
   } catch (err) {
     console.log(`Error on post '/api/v1/reg': ${err}`)
     res.json({ status: 'error', error: err.message })
@@ -190,8 +201,7 @@ if (config.isSocketsEnabled) {
               type: 'USER_LOGIN',
               messageID: timestamp,
               timestamp,
-              username: parsedData.username
-              // message: `${parsedData.username} just logged in`
+              username: parsedData.username,
             }))
           })
         }
@@ -208,7 +218,6 @@ if (config.isSocketsEnabled) {
               messageID: timestamp,
               timestamp,
               username: it.username
-              // message: `${it.username} just logged out`
             }))
           })
           return false

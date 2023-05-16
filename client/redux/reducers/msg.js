@@ -25,18 +25,24 @@ export default (state = initialState, action) => {
     case ADD_MESSAGE:
       return { ...state, messages: [...state.messages, action.payload] }
     case USER_LOGIN:
-      return { ...state, onlineUsers: [...state.onlineUsers, action.payload.username] }
+      return {
+        ...state,
+        onlineUsers: [
+          ...state.onlineUsers,
+          { username: action.payload.username, userpic: action.payload.userpic }
+        ]
+      }
     case USER_LOGOUT:
       return {
         ...state,
-        onlineUsers: state.onlineUsers.filter((it) => it !== action.payload.username)
+        onlineUsers: state.onlineUsers.filter((it) => it.username !== action.payload.username)
       }
     default:
       return state
   }
 }
 
-const addMessage = (message) => {
+const addMessageToState = (message) => {
   return { type: ADD_MESSAGE, payload: message }
 }
 
@@ -49,26 +55,25 @@ const userLogOutAC = (message) => {
 }
 
 export const sendMessage = (data) => (dispatch, getState) => {
-  if (data.message) dispatch(addMessage(data))
+  if (data.message) dispatch(addMessageToState(data))
   const { socket } = getState().socket
   isSocketReady(socket, () => socket.send(JSON.stringify(data)))
 }
 
 export const userLogIn = (message) => (dispatch, getState) => {
-  console.log('userLogIn', message)
   if (getState().msg.onlineUsers.findIndex((it) => it === message.username) < 0)
     dispatch(userLogInAC(message))
 }
 
 export const userLogOut = (message) => (dispatch) => {
-  dispatch(userLogInAC(message))
+  dispatch(userLogOutAC(message))
 }
 
-export const newMessage = (message) => (dispatch) => {
+export const newMessageReceived = (message) => (dispatch) => {
   if (message.type === 'USER_LOGIN') {
     dispatch(userLogInAC(message))
     dispatch(
-      addMessage({
+      addMessageToState({
         type: 'SHOW_MESSAGE',
         channel: 'ALL',
         messageID: message.messageID,
@@ -80,7 +85,7 @@ export const newMessage = (message) => (dispatch) => {
   } else if (message.type === 'USER_LOGOUT') {
     dispatch(userLogOutAC(message))
     dispatch(
-      addMessage({
+      addMessageToState({
         type: 'SHOW_MESSAGE',
         channel: 'ALL',
         messageID: message.messageID,
@@ -90,6 +95,6 @@ export const newMessage = (message) => (dispatch) => {
       })
     )
   } else if (message.type === 'SHOW_MESSAGE') {
-    dispatch(addMessage(message))
+    dispatch(addMessageToState(message))
   }
 }

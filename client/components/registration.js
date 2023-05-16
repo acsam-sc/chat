@@ -6,10 +6,11 @@ const RegistrationPage = () => {
   const dispatch = useDispatch()
   const { username, password, regError } = useSelector((state) => state.auth)
   const [repeatPassword, setRepeatPassword] = useState('')
+  const [userpicFile, setUserPicFile] = useState()
   const handleOnKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      dispatch(registerUser(username, password, repeatPassword))
+      dispatch(registerUser(username, password, repeatPassword, userpicFile))
     }
   }
 
@@ -56,13 +57,28 @@ const RegistrationPage = () => {
               onChange={(e) => setRepeatPassword(e.target.value)}
               onKeyPress={(e) => handleOnKeyPress(e)}
             />
+                      <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="userpic">
+              Choose profile picture:
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="userpic"
+              type="file"
+              accept="image/png, image/jpeg"
+              // value={userpicFile}
+              // onChange={(e) => dispatch(updateUserpicFile(e.target.value))}
+              onChange={(e) => setUserPicFile(e.target.files[0])}
+              // onKeyPress={(e) => handleOnKeyPress(e)}
+            />
+          </div>
             {regError && <p className="text-red-500 text-xs italic">{regError}</p>}
           </div>
           <div className="flex items-center justify-between">
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={() => dispatch(registerUser(username, password, repeatPassword))}
+              onClick={() => dispatch(registerUser(username, password, repeatPassword, userpicFile))}
             >
               Register
             </button>
