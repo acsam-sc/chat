@@ -60,15 +60,7 @@ passport.use('jwt', passportJWT.jwt)
 middleware.forEach((it) => server.use(it))
 // server.use('/api/v1/auth', formidable())
 
-server.get('/api/v1/exchangerate', async (req, res) => {
-  const data = await axios.get(
-    `https://api.exchangeratesapi.io/latest?symbols=${req.query.currency}`
-  )
-  res.json(data.data)
-})
-
-  // const portionToSend = sortedItems().slice((page - 1) * count, page * count)
-
+if (!fs.existsSync(path.join(__dirname, 'userpics'))) fs.mkdirSync(path.join(__dirname, 'userpics'))
 
 server.get('/api/v1/messages', async (req, res) => {
   
@@ -91,7 +83,7 @@ server.get('/api/v1/auth', async (req, res) => {
 })
 
 server.get('/api/v1/user-info', auth([]), async (req, res) => {
-  res.json({ status: 'ok', onlineUsers: connectedUsers.map((it) => it.username) })
+  res.json({ status: 'ok', onlineUsers: connectedUsers })
 })
 
 server.post('/api/v1/auth', async (req, res) => {
@@ -110,7 +102,7 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', formidable(), async (req, res) => {
+server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, 'userpics')}), async (req, res) => {
   const { username, password } = req.fields
   const userpicFile = {
     data: fs.readFileSync(req.files.userpic.path),
@@ -187,21 +179,22 @@ if (config.isSocketsEnabled) {
   echo.on('connection', (conn) => {
     connections.push(conn)
     
-    conn.on('data', (data) => {
+    conn.on('data', async (data) => {
       const timestamp = Date.now()
       const parsedData = JSON.parse(data)
-      // console.log('parsedData', parsedData)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
       if (parsedData.type === 'WELCOME_MESSAGE' &&
         parsedData.username &&
         (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
-          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
+          const user = await User.findOne({ username: parsedData.username }).exec()
+          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id, userpic: user.userpic }]
           connections.forEach((c) => {
             c.write(JSON.stringify({
               type: 'USER_LOGIN',
               messageID: timestamp,
               timestamp,
               username: parsedData.username,
+              userpic: user.userpic
             }))
           })
         }

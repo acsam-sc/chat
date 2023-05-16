@@ -61,8 +61,9 @@ export const sendMessage = (data) => (dispatch, getState) => {
 }
 
 export const userLogIn = (message) => (dispatch, getState) => {
-  if (getState().msg.onlineUsers.findIndex((it) => it === message.username) < 0)
+  if (getState().msg.onlineUsers.findIndex((it) => it === message.username) < 0) {
     dispatch(userLogInAC(message))
+  }
 }
 
 export const userLogOut = (message) => (dispatch) => {
@@ -71,7 +72,10 @@ export const userLogOut = (message) => (dispatch) => {
 
 export const newMessageReceived = (message) => (dispatch) => {
   if (message.type === 'USER_LOGIN') {
-    dispatch(userLogInAC(message))
+    const userpicToString = `data:${message.userpic.contentType};base64, ${Buffer.from(
+      message.userpic.data.data
+    ).toString('base64')}`
+    dispatch(userLogIn({ username: message.username, userpic: userpicToString }))
     dispatch(
       addMessageToState({
         type: 'SHOW_MESSAGE',

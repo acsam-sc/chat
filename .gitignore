@@ -67,3 +67,5 @@ dist
 yarn-error.log
 *.csv
 logs.json
+
+/server/userpics

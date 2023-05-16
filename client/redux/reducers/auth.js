@@ -138,8 +138,12 @@ export const trySignIn = () => async (dispatch) => {
 export const tryGetUserInfo = () => async (dispatch) => {
   await axios.get('/api/v1/user-info').then((res) => {
     console.log('tryGetUserInfo', res.data.onlineUsers)
-    res.data.onlineUsers.map((it) =>
-      dispatch(userLogIn({ username: it.username, userpic: it.userpic }))
-    )
+    res.data.onlineUsers.map((it) => {
+      const userpicToString = `data:${it.userpic.contentType};base64, ${Buffer.from(
+        it.userpic.data.data
+      ).toString('base64')}`
+      dispatch(userLogIn({ username: it.username, userpic: userpicToString }))
+      return it
+    })
   })
 }
