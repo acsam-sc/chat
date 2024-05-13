@@ -2,6 +2,7 @@ import React from 'react'
 
 const Message = (props) => {
   const timestamp = new Date(props.timestamp)
+
   return (
     <div className="flex items-start mb-4">
       <img alt="message_img" src={props.userpic} className="w-10 h-10 rounded mr-3" />

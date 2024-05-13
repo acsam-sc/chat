@@ -72,10 +72,11 @@ export const userLogOut = (message) => (dispatch) => {
 
 export const newMessageReceived = (message) => (dispatch) => {
   if (message.type === 'USER_LOGIN') {
-    const userpicToString = `data:${message.userpic.contentType};base64, ${Buffer.from(
-      message.userpic.data.data
-    ).toString('base64')}`
-    dispatch(userLogIn({ username: message.username, userpic: userpicToString }))
+    // const userpicToString = `data:${message.userpic.contentType};base64, ${Buffer.from(
+    //   message.userpic.data.data
+    // ).toString('base64')}`
+    // dispatch(userLogIn({ username: message.username, userpic: userpicToString }))
+    dispatch(userLogIn({ username: message.username, userpic: message.userpic }))
     dispatch(
       addMessageToState({
         type: 'SHOW_MESSAGE',

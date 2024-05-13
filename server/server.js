@@ -2,7 +2,7 @@ import express from 'express'
 import path from 'path'
 import fs from 'fs'
 import cors from 'cors'
-import bodyParser from 'body-parser'
+import bodyParser, { raw } from 'body-parser'
 import sockjs from 'sockjs'
 import { renderToStaticNodeStream } from 'react-dom/server'
 import React from 'react'
@@ -49,7 +49,7 @@ const server = express()
 const middleware = [
   cors(),
   passport.initialize(),
-  express.static(path.resolve(__dirname, '../dist/assets')),
+  express.static(path.resolve(__dirname, '../client/assets')),
   bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }),
   bodyParser.json({ limit: '50mb', extended: true }),
   cookieParser()
@@ -60,7 +60,7 @@ passport.use('jwt', passportJWT.jwt)
 middleware.forEach((it) => server.use(it))
 // server.use('/api/v1/auth', formidable())
 
-if (!fs.existsSync(path.join(__dirname, 'userpics'))) fs.mkdirSync(path.join(__dirname, 'userpics'))
+if (!fs.existsSync(path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics'))) fs.mkdirSync(__dirname, '..', 'client', 'assets', 'images', 'userpics')
 
 server.get('/api/v1/messages', async (req, res) => {
   
@@ -102,20 +102,24 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, 'userpics')}), async (req, res) => {
+server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics')}), async (req, res) => {
   const { username, password } = req.fields
-  const userpicFile = {
-    data: fs.readFileSync(req.files.userpic.path),
-    contentType: req.files.userpic.type
-  }
+  console.log('userpic.path=', req.files.userpic)
+  // const userpicFile = {
+  //   data: fs.readFileSync(req.files.userpic.path),
+  //   contentType: req.files.userpic.type
+  // }
   try {
     const user = new User({
       username,
-      password,
-      userpic: userpicFile
+      password
     })
-    user.save()
+    const oldPath = req.files.userpic.path
+    const newPath = path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics', username) + '.jpg'
+    const rawData = fs.readFileSync(oldPath)
+    fs.writeFileSync(newPath, rawData)
     if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
+    user.save()
     delete user.password
     delete user['__v']
     const payload = { uid: user.id }

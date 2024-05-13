@@ -38,8 +38,7 @@ export default (state = initialState, action) => {
         ...state,
         token: action.payload.token,
         password: '',
-        username: action.payload.username,
-        userpic: action.payload.userpic
+        username: action.payload.username
       }
     default:
       return state
@@ -54,10 +53,6 @@ export const updatePasswordField = (password) => {
   return { type: UPDATE_PASSWORD, payload: password }
 }
 
-export const updateUserpicFile = (userpic) => {
-  return { type: UPDATE_USERPIC, payload: userpic }
-}
-
 export const setAuthError = (authError) => {
   return { type: SET_AUTH_ERROR, payload: authError }
 }
@@ -66,8 +61,8 @@ export const setRegError = (regError) => {
   return { type: SET_REG_ERROR, payload: regError }
 }
 
-export const setLoginCredits = (token, username, userpic) => {
-  return { type: LOGIN, payload: { token, username, userpic } }
+export const setLoginCredits = (token, username) => {
+  return { type: LOGIN, payload: { token, username } }
 }
 
 export const registerUser = (username, password, repeatPassword, userpic) => async (dispatch) => {
@@ -87,7 +82,7 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
       if (res.data.status === 'error') {
         dispatch(setRegError(res.data.error))
       } else {
-        dispatch(setLoginCredits(res.data.token, res.data.user.username, res.data.user.userpic))
+        dispatch(setLoginCredits(res.data.token, res.data.user.username))
         history.push('/login')
       }
     })
@@ -116,7 +111,7 @@ export const signInUser = () => async (dispatch, getState) => {
         if (res.data.status === 'error') {
           dispatch(setAuthError(res.data.error))
         } else {
-          dispatch(setLoginCredits(res.data.token, res.data.user.username, res.data.user.userpic))
+          dispatch(setLoginCredits(res.data.token, res.data.user.username))
           dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
           history.push('/chat')
         }
@@ -128,7 +123,7 @@ export const trySignIn = () => async (dispatch) => {
   await axios
     .get('/api/v1/auth')
     .then((res) => {
-      dispatch(setLoginCredits(res.data.token, res.data.user.username, res.data.user.userpic))
+      dispatch(setLoginCredits(res.data.token, res.data.user.username))
       dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username }))
       history.push('/chat')
     })
@@ -139,10 +134,7 @@ export const tryGetUserInfo = () => async (dispatch) => {
   await axios.get('/api/v1/user-info').then((res) => {
     console.log('tryGetUserInfo', res.data.onlineUsers)
     res.data.onlineUsers.map((it) => {
-      const userpicToString = `data:${it.userpic.contentType};base64, ${Buffer.from(
-        it.userpic.data.data
-      ).toString('base64')}`
-      dispatch(userLogIn({ username: it.username, userpic: userpicToString }))
+      dispatch(userLogIn({ username: it.username }))
       return it
     })
   })
