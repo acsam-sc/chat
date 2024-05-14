@@ -24,7 +24,7 @@ const MessageInput = (props) => {
   }
 
   return (
-    <div className="flex m-6 rounded-lg border-2 border-gray-500 overflow-hidden">
+    <div className="flex m-6 rounded-lg border-2 border-gray-500">
       <span className="text-3xl text-gray px-3 border-r-2 border-gray-500">+</span>
       <input
         type="text"

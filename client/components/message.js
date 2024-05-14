@@ -2,6 +2,9 @@ import React from 'react'
 
 const Message = (props) => {
   const timestamp = new Date(props.timestamp)
+  const hours = timestamp.getUTCHours().toString().padStart(2, '0')
+  const minutes = timestamp.getUTCMinutes().toString().padStart(2, '0')
+  const seconds = timestamp.getUTCSeconds().toString().padStart(2, '0')
 
   return (
     <div className="flex items-start mb-4">
@@ -10,9 +13,8 @@ const Message = (props) => {
         <div className="flex items-end">
           <span className="font-bold text-md mr-2 font-sans">
             {props.username}
-            {props.messageId}
           </span>
-          <span className="text-gray-500 text-xs font-light">{`${timestamp.getUTCHours()}:${timestamp.getUTCMinutes()}:${timestamp.getUTCSeconds()}`}</span>
+          <span className="text-gray-500 text-xs font-light">{`${hours}:${minutes}:${seconds}`}</span>
         </div>
         <p className="font-light text-md text-gray-700 pt-1"> {props.text} </p>
       </div>

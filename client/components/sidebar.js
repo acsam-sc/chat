@@ -2,7 +2,7 @@ import React from 'react'
 
 const Sidebar = () => {
   return (
-    <div className="bg-purple-800 text-purple-300 w-1/5 pb-6 hidden md:block">
+    <div className="bg-purple-800 text-purple-300 w-1/5 pb-6 flex hidden md:block">
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
         <span>Tailwind CSS</span>
         <svg className="h-6 w-6 text-purple-100 fill-current" viewBox="0 0 32 32">
