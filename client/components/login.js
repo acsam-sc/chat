@@ -1,14 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUsernameField, updatePasswordField, signInUser } from '../redux/reducers/auth'
+import { signInUser } from '../redux/reducers/auth'
 
 const LoginPage = () => {
   const dispatch = useDispatch()
-  const { username, password, authError } = useSelector((state) => state.auth)
+  const { authError } = useSelector((state) => state.auth)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const handleOnKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      dispatch(signInUser())
+      dispatch(signInUser(username, password))
     }
   }
 
@@ -26,7 +28,7 @@ const LoginPage = () => {
               type="text"
               value={username}
               placeholder="Username"
-              onChange={(e) => dispatch(updateUsernameField(e.target.value))}
+              onChange={(e) => setUsername(e.target.value)}
               onKeyPress={(e) => handleOnKeyPress(e)}
             />
           </div>
@@ -40,7 +42,7 @@ const LoginPage = () => {
               type="password"
               value={password}
               placeholder="******************"
-              onChange={(e) => dispatch(updatePasswordField(e.target.value))}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyPress={(e) => handleOnKeyPress(e)}
             />
             {authError && <p className="text-red-500 text-xs italic">{authError}</p>}
@@ -49,7 +51,7 @@ const LoginPage = () => {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={() => dispatch(signInUser())}
+              onClick={() => dispatch(signInUser(username, password))}
             >
               Sign In
             </button>

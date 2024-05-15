@@ -3,9 +3,6 @@ import Cookies from 'universal-cookie'
 import { history } from '..'
 import { sendMessage, userLogIn } from './msg'
 
-const UPDATE_USERNAME = 'auth/UPDATE_USERNAME'
-const UPDATE_PASSWORD = 'auth/UPDATE_PASSWORD'
-const UPDATE_USERPIC = 'auth/UPDATE_USERPIC'
 const SET_AUTH_ERROR = 'auth/SET_AUTH_ERROR'
 const SET_REG_ERROR = 'auth/SET_REG_ERROR'
 const LOGIN = 'auth/LOGIN'
@@ -23,12 +20,6 @@ const initialState = {
 export default (state = initialState, action) => {
   // console.log('auth reducer state', action)
   switch (action.type) {
-    case UPDATE_USERNAME:
-      return { ...state, username: action.payload }
-    case UPDATE_PASSWORD:
-      return { ...state, password: action.payload }
-    case UPDATE_USERPIC:
-      return { ...state, userpic: action.payload }
     case SET_REG_ERROR:
       return { ...state, regError: action.payload }
     case SET_AUTH_ERROR:
@@ -43,14 +34,6 @@ export default (state = initialState, action) => {
     default:
       return state
   }
-}
-
-export const updateUsernameField = (username) => {
-  return { type: UPDATE_USERNAME, payload: username }
-}
-
-export const updatePasswordField = (password) => {
-  return { type: UPDATE_PASSWORD, payload: password }
 }
 
 export const setAuthError = (authError) => {
@@ -89,8 +72,7 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
   }
 }
 
-export const signInUser = () => async (dispatch, getState) => {
-  const { username, password } = getState().auth
+export const signInUser = (username, password) => async (dispatch) => {
   dispatch(setAuthError(null))
   if (!username) {
     dispatch(setAuthError('Username cannot be empty'))
@@ -98,15 +80,15 @@ export const signInUser = () => async (dispatch, getState) => {
     dispatch(setAuthError('Password cannot be empty'))
   } else
     await axios
-      .post('/api/v1/auth', {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username,
-          password
-        })
-      })
+      .post(
+        '/api/v1/auth',
+        { username, password },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
       .then((res) => {
         if (res.data.status === 'error') {
           dispatch(setAuthError(res.data.error))
@@ -119,7 +101,7 @@ export const signInUser = () => async (dispatch, getState) => {
 }
 
 export const trySignIn = () => async (dispatch) => {
-  console.log('Trying SignIn')
+  // console.log('Trying SignIn')
   await axios
     .get('/api/v1/auth')
     .then((res) => {
@@ -130,9 +112,19 @@ export const trySignIn = () => async (dispatch) => {
     .catch(() => history.push('/login'))
 }
 
+// export const tryGetUserInfo = () => async (dispatch) => {
+//   await axios.get('/api/v1/onlineusers').then((res) => {
+//   console.log('tryGetUserInfo', res.data.onlineUsers)
+//     res.data.onlineUsers.map((it) => {
+//       dispatch(userLogIn({ username: it.username }))
+//       return it
+//     })
+//   })
+// }
+
 export const tryGetUserInfo = () => async (dispatch) => {
-  await axios.get('/api/v1/user-info').then((res) => {
-    console.log('tryGetUserInfo', res.data.onlineUsers)
+  await axios.get('/api/v1/onlineusers').then((res) => {
+    // console.log('GettingOnlineUsers', res.data.onlineUsers)
     res.data.onlineUsers.map((it) => {
       dispatch(userLogIn({ username: it.username }))
       return it

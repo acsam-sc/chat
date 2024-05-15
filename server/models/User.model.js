@@ -16,10 +16,6 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: ['user']
     },
-    userpic: {
-      data: Buffer,
-      contentType: String
-    },
     createdAt: {
       type: Date,
       default: +new Date()
@@ -64,6 +60,16 @@ userSchema.statics = {
       throw new Error('Username or Password is Incorrect')
     }
 
+    return user
+  },
+  async findUser({ username }) {
+    if (!username) {
+      throw new Error('No Username')
+    }
+    const user = await this.findOne({ username }).exec()
+    if (!user) {
+      throw new Error('User not found')
+    }
     return user
   }
 }

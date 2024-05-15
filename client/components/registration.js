@@ -2,15 +2,17 @@ import React, { useState } from 'react'
 import classNames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  updateUsernameField,
-  updatePasswordField,
+  // updateUsernameField,
+  // updatePasswordField,
   registerUser,
   setRegError
 } from '../redux/reducers/auth'
 
 const RegistrationPage = () => {
   const dispatch = useDispatch()
-  const { username, password, regError } = useSelector((state) => state.auth)
+  const { regError } = useSelector((state) => state.auth)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [userpicFile, setUserPicFile] = useState('')
   const handlePicFileChange = (e) => {
@@ -42,7 +44,7 @@ const RegistrationPage = () => {
               type="text"
               value={username}
               placeholder="Username"
-              onChange={(e) => dispatch(updateUsernameField(e.target.value))}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="mb-6">
@@ -55,7 +57,7 @@ const RegistrationPage = () => {
               type="password"
               value={password}
               placeholder="******************"
-              onChange={(e) => dispatch(updatePasswordField(e.target.value))}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="repeat_password">
               Repeat Password

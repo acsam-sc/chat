@@ -6,7 +6,7 @@ import bodyParser, { raw } from 'body-parser'
 import sockjs from 'sockjs'
 import { renderToStaticNodeStream } from 'react-dom/server'
 import React from 'react'
-import axios from 'axios'
+// import axios from 'axios'
 import formidable from 'express-formidable'
 
 import cookieParser from 'cookie-parser'
@@ -67,10 +67,12 @@ server.get('/api/v1/messages', async (req, res) => {
 })
 
 server.get('/api/v1/auth', async (req, res) => {
+  console.log('get /api/v1/auth req.body', req.cookies)
   try {
     const jwtUser = jwt.verify(req.cookies.token, config.secret)
-    const user = await User.findById(jwtUser.uid)
-    const payload = { uid: user.id }
+    const userDB = await User.findById(jwtUser.uid)
+    const user = userDB.toObject()
+    const payload = { uid: userDB.id }
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
@@ -82,15 +84,30 @@ server.get('/api/v1/auth', async (req, res) => {
   }  
 })
 
-server.get('/api/v1/user-info', auth([]), async (req, res) => {
+server.get('/api/v1/onlineusers', auth([]), async (req, res) => {
   res.json({ status: 'ok', onlineUsers: connectedUsers })
 })
 
-server.post('/api/v1/auth', async (req, res) => {
-  console.log('request.body', req.body.body)
+server.get('/api/v1/user-info', async (req, res) => {
+  console.log('/api/v1/user-info req.body', req.body)
   try {
-    const user = await User.findAndValidateUser(JSON.parse(req.body.body))
-    const payload = { uid: user.id }
+    const userDB = await User.findUser(req.body)
+    const user = userDB.toObject()
+    delete user.password
+    delete user['__v']
+    res.json({ status: 'ok', user })
+  } catch (err) {
+    console.log(`Error on get '/api/v1/user-info': ${err}`)
+    res.json({ status: 'error', error: err.message })
+  }
+})
+
+server.post('/api/v1/auth', async (req, res) => {
+  console.log('/api/v1/auth req.body', req.body)
+  try {
+    const userDB = await User.findAndValidateUser(req.body)
+    const user = userDB.toObject()
+    const payload = { uid: userDB.id }
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
@@ -104,11 +121,6 @@ server.post('/api/v1/auth', async (req, res) => {
 
 server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics')}), async (req, res) => {
   const { username, password } = req.fields
-  console.log('userpic.path=', req.files.userpic)
-  // const userpicFile = {
-  //   data: fs.readFileSync(req.files.userpic.path),
-  //   contentType: req.files.userpic.type
-  // }
   try {
     const user = new User({
       username,

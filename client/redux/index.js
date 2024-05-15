@@ -25,7 +25,7 @@ const store = createStore(rootReducer(history), initialState, composedEnhancers)
 
 if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
   const initSocket = () => {
-    console.log('initSocket')
+    // console.log('initSocket')
     const socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
     store.dispatch(addSocketToState(socket))
 
