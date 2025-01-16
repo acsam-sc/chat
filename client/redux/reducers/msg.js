@@ -16,7 +16,7 @@ const isSocketReady = (socket, callback) => {
     } else {
       isSocketReady(socket, callback)
     }
-  }, 500)
+  }, 1000)
 }
 
 export default (state = initialState, action) => {
@@ -60,45 +60,46 @@ export const sendMessage = (data) => (dispatch, getState) => {
   isSocketReady(socket, () => socket.send(JSON.stringify(data)))
 }
 
-export const userLogIn = (message) => (dispatch, getState) => {
-  if (getState().msg.onlineUsers.findIndex((it) => it === message.username) < 0) {
-    dispatch(userLogInAC(message))
-  }
+export const userLogIn = (message) => (dispatch) => {
+  dispatch(userLogInAC(message))
 }
 
 export const userLogOut = (message) => (dispatch) => {
   dispatch(userLogOutAC(message))
 }
 
-export const newMessageReceived = (message) => (dispatch) => {
+export const newMessageReceived = (message, onlineUsers) => (dispatch) => {
+  const logInMessage = {
+    type: 'SHOW_MESSAGE',
+    channel: 'ALL',
+    messageID: message.messageID,
+    timestamp: message.timestamp,
+    username: 'ChatInfo',
+    message: `${message.username} just logged in`
+  }
+  const logOutMessage = {
+    type: 'SHOW_MESSAGE',
+    channel: 'ALL',
+    messageID: message.messageID,
+    timestamp: message.timestamp,
+    username: 'ChatInfo',
+    message: `${message.username} just logged out`
+  }
+
   if (message.type === 'USER_LOGIN') {
     // const userpicToString = `data:${message.userpic.contentType};base64, ${Buffer.from(
     //   message.userpic.data.data
     // ).toString('base64')}`
     // dispatch(userLogIn({ username: message.username, userpic: userpicToString }))
-    dispatch(userLogIn({ username: message.username, userpic: message.userpic }))
-    dispatch(
-      addMessageToState({
-        type: 'SHOW_MESSAGE',
-        channel: 'ALL',
-        messageID: message.messageID,
-        timestamp: message.timestamp,
-        username: 'ChatInfo',
-        message: `${message.username} just logged in`
-      })
-    )
+    if (onlineUsers.findIndex((it) => it === message.username) < 0) {
+      dispatch(userLogIn(message))
+      dispatch(addMessageToState(logInMessage))
+      // dispatch(sendMessage(logInMessage, socket))
+    }
   } else if (message.type === 'USER_LOGOUT') {
-    dispatch(userLogOutAC(message))
-    dispatch(
-      addMessageToState({
-        type: 'SHOW_MESSAGE',
-        channel: 'ALL',
-        messageID: message.messageID,
-        timestamp: message.timestamp,
-        username: 'ChatInfo',
-        message: `${message.username} just logged out`
-      })
-    )
+    dispatch(userLogOut(message))
+    dispatch(addMessageToState(logOutMessage))
+    // dispatch(sendMessage(logOutMessage, socket))
   } else if (message.type === 'SHOW_MESSAGE') {
     dispatch(addMessageToState(message))
   }

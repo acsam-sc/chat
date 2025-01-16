@@ -1,12 +1,7 @@
 import React, { useState } from 'react'
 import classNames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  // updateUsernameField,
-  // updatePasswordField,
-  registerUser,
-  setRegError
-} from '../redux/reducers/auth'
+import { registerUser, setRegError } from '../redux/reducers/auth'
 
 const RegistrationPage = () => {
   const dispatch = useDispatch()
@@ -72,7 +67,7 @@ const RegistrationPage = () => {
             />
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="userpic">
-                Choose profile picture(max. 2Mb):
+                Choose profile picture(png/jpeg, max. 2Mb):
               </label>
               <input
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"

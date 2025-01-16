@@ -5,12 +5,13 @@ import { signInUser } from '../redux/reducers/auth'
 const LoginPage = () => {
   const dispatch = useDispatch()
   const { authError } = useSelector((state) => state.auth)
+  const { socket } = useSelector((state) => state)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const handleOnKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      dispatch(signInUser(username, password))
+      dispatch(signInUser(username, password, socket))
     }
   }
 
@@ -51,7 +52,7 @@ const LoginPage = () => {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={() => dispatch(signInUser(username, password))}
+              onClick={() => dispatch(signInUser(username, password, socket))}
             >
               Sign In
             </button>

@@ -35,8 +35,9 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
 
     socket.onmessage = (message) => {
       const parsedData = JSON.parse(message.data)
+      // console.log('socket.onmessage', JSON.stringify(message), JSON.stringify(store.getState().msg.onlineUsers))
       // console.log('socket.onmessage', parsedData)
-      store.dispatch(newMessageReceived(parsedData))
+      store.dispatch(newMessageReceived(parsedData, store.getState().msg.onlineUsers))
       // store.dispatch(parsedData)
       // socket.send(message)
       // eslint-disable-next-line no-console

@@ -7,18 +7,17 @@ const MessageInput = (props) => {
   const { username } = useSelector((state) => state.auth)
   const [messageText, setMessageText] = useState('')
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (messageText && event.key === 'Enter') {
       const timestamp = Date.now()
-      dispatch(
-        sendMessage({
-          type: 'SHOW_MESSAGE',
-          channel: '#general',
-          messageID: timestamp + props.latestIndex,
-          timestamp,
-          username,
-          message: messageText
-        })
-      )
+      const messageToSend = {
+        type: 'SHOW_MESSAGE',
+        channel: '#general',
+        messageID: timestamp + props.latestIndex,
+        timestamp,
+        username,
+        message: messageText
+      }
+      dispatch(sendMessage(messageToSend))
       setMessageText('')
     }
   }

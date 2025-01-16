@@ -36,7 +36,7 @@ try {
   console.log(Root)
 } catch (ex) {
   // eslint-disable-next-line no-console
-  console.log(' run yarn build:prod to enable ssr')
+  console.log('run yarn build:prod to enable ssr')
 }
 
 let connections = []
@@ -121,7 +121,12 @@ server.post('/api/v1/auth', async (req, res) => {
 
 server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics')}), async (req, res) => {
   const { username, password } = req.fields
-  try {
+  const userDB = await User.findUser(username)
+  if (!userDB) {
+    res.json({ status: 'error', error: 'User exists' })
+    console.log(`/api/v1/reg req.files.userpic.path: ${req.files.userpic.path}`)
+    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
+  } else try {
     const user = new User({
       username,
       password
@@ -196,31 +201,30 @@ if (config.isSocketsEnabled) {
     connections.push(conn)
     
     conn.on('data', async (data) => {
-      const timestamp = Date.now()
       const parsedData = JSON.parse(data)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
       if (parsedData.type === 'WELCOME_MESSAGE' &&
         parsedData.username &&
         (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
+          const timestamp = Date.now()
           const user = await User.findOne({ username: parsedData.username }).exec()
-          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id, userpic: user.userpic }]
+          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
           connections.forEach((c) => {
             c.write(JSON.stringify({
               type: 'USER_LOGIN',
               messageID: timestamp,
               timestamp,
-              username: parsedData.username,
-              userpic: user.userpic
+              username: parsedData.username
             }))
           })
         }
     })
 
     conn.on('close', () => {
-      const timestamp = Date.now()
       connections = connections.filter((c) => c.readyState !== 3)
       connectedUsers = connectedUsers.filter(it => {
         if (it.connID === conn.id) {
+          const timestamp = Date.now()
           connections.forEach((c) => {
             c.write(JSON.stringify({
               type: 'USER_LOGOUT',
