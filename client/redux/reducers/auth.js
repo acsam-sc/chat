@@ -19,7 +19,6 @@ const initialState = {
 }
 
 export default (state = initialState, action) => {
-  // console.log('auth reducer state', action)
   switch (action.type) {
     case SET_REG_ERROR:
       return { ...state, regError: action.payload }
@@ -59,11 +58,7 @@ export const setToken = (token) => {
 
 export const registerUser = (username, password, repeatPassword, userpic) => async (dispatch) => {
   dispatch(setRegError(null))
-  if (!username) {
-    dispatch(setRegError('Username cannot be empty'))
-  } else if (!password) {
-    dispatch(setRegError('Password cannot be empty'))
-  } else if (password !== repeatPassword) {
+  if (password !== repeatPassword) {
     dispatch(setRegError('Passwords do not match'))
   } else {
     const formData = new FormData()
@@ -71,12 +66,13 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
     formData.append('password', password)
     formData.append('userpic', userpic)
     await sendRegData(formData).then((res) => {
+      console.log('registerUser', JSON.stringify(res))
       if (res.data.status === 'error') {
         dispatch(setRegError(res.data.error))
       } else {
         dispatch(setUsername(res.data.user.username))
         dispatch(setToken(res.data.token))
-        history.push('/login')
+        history.push('/chat')
       }
     })
   }

@@ -60,14 +60,14 @@ passport.use('jwt', passportJWT.jwt)
 middleware.forEach((it) => server.use(it))
 // server.use('/api/v1/auth', formidable())
 
-if (!fs.existsSync(path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics'))) fs.mkdirSync(__dirname, '..', 'client', 'assets', 'images', 'userpics')
+if (!fs.existsSync(path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics'))) fs.mkdirSync(__dirname, '..', 'dist', 'assets', 'images', 'userpics')
 
 server.get('/api/v1/messages', async (req, res) => {
   
 })
 
 server.get('/api/v1/auth', async (req, res) => {
-  console.log('get /api/v1/auth req.body', req.cookies)
+  // console.log('get /api/v1/auth req.body', req.cookies)
   try {
     const jwtUser = jwt.verify(req.cookies.token, config.secret)
     const userDB = await User.findById(jwtUser.uid)
@@ -76,7 +76,7 @@ server.get('/api/v1/auth', async (req, res) => {
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
     res.json({ status: 'ok', token, user })
   } catch (err) {
     console.log(`Error on get '/api/v1/auth': ${err}`)
@@ -111,7 +111,7 @@ server.post('/api/v1/auth', async (req, res) => {
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
     res.json({ status: 'ok', token, user })
   } catch (err) {
     console.log(`Error on post '/api/v1/auth': ${err}`)
@@ -119,33 +119,38 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics')}), async (req, res) => {
+server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics')}), async (req, res) => {
   const { username, password } = req.fields
-  const userDB = await User.findUser(username)
-  if (!userDB) {
-    res.json({ status: 'error', error: 'User exists' })
-    console.log(`/api/v1/reg req.files.userpic.path: ${req.files.userpic.path}`)
-    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
-  } else try {
-    const user = new User({
-      username,
-      password
-    })
-    const oldPath = req.files.userpic.path
-    const newPath = path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics', username) + '.jpg'
-    const rawData = fs.readFileSync(oldPath)
-    fs.writeFileSync(newPath, rawData)
-    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
-    user.save()
-    delete user.password
-    delete user['__v']
-    const payload = { uid: user.id }
-    const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
-    res.json({ status: 'ok', token, user })
+  console.log('/api/v1/reg', username, password)
+  const tempUserPic = req.files.userpic.path
+  try {
+    const userDB = await User.findUser({ username })
+    if (userDB) res.json({ status: 'error', error: 'User already exists' })
+    if (fs.existsSync(tempUserPic)) fs.unlinkSync(tempUserPic)
   } catch (err) {
-    console.log(`Error on post '/api/v1/reg': ${err}`)
-    res.json({ status: 'error', error: err.message })
+    if (err.message === 'User not found') {
+      try {
+        const user = new User({
+          username,
+          password
+        })
+        const newPath = path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics', username) + '.jpg'
+        const newUserPic = fs.readFileSync(tempUserPic)
+        fs.writeFileSync(newPath, newUserPic)
+        if (fs.existsSync(tempUserPic)) fs.unlinkSync(tempUserPic)
+        user.save()
+        delete user.password
+        delete user['__v']
+        const payload = { uid: user.id }
+        const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
+        res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
+        res.json({ status: 'ok', token, user })
+      } catch (err) {
+        console.log(`Error on creating new user at '/api/v1/reg': ${err}`)
+      }
+    } else {
+      res.json({ status: 'error', error: err.message })
+    }
   }
 })
 

@@ -1,19 +1,20 @@
 import React, { useState } from 'react'
+import classNames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
 import { signInUser } from '../redux/reducers/auth'
 
 const LoginPage = () => {
   const dispatch = useDispatch()
   const { authError } = useSelector((state) => state.auth)
-  const { socket } = useSelector((state) => state)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const handleOnKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      dispatch(signInUser(username, password, socket))
+      dispatch(signInUser(username, password))
     }
   }
+  const isLoginButtonDisabled = !username || !password || authError
 
   return (
     <div className="w-screen h-screen bg-gray-100 flex justify-center items-center">
@@ -24,7 +25,11 @@ const LoginPage = () => {
               Username
             </label>
             <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={classNames(
+                authError
+                  ? 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border-red-500'
+                  : 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+              )}
               id="username"
               type="text"
               value={username}
@@ -38,7 +43,11 @@ const LoginPage = () => {
               Password
             </label>
             <input
-              className="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+              className={classNames(
+                authError
+                  ? 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border-red-500'
+                  : 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+              )}
               id="password"
               type="password"
               value={password}
@@ -50,9 +59,10 @@ const LoginPage = () => {
           </div>
           <div className="flex items-center justify-between">
             <button
+              disabled={isLoginButtonDisabled}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={() => dispatch(signInUser(username, password, socket))}
+              onClick={() => dispatch(signInUser(username, password))}
             >
               Sign In
             </button>

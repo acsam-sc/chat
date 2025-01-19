@@ -6,14 +6,14 @@ import { trySignIn } from '../redux/reducers/auth'
 
 const Startup = (props) => {
   const dispatch = useDispatch()
-  const token = useSelector((s) => s.auth.token)
+  const { token, username } = useSelector((s) => s.auth)
   useEffect(() => {
     // console.log('Startup useEffect')
-    if (token) {
+    if (token && !username) {
       dispatch(trySignIn())
       // dispatch(tryGetUserInfo())
     }
-  }, [dispatch, token])
+  }, [dispatch, token, username])
 
   return props.children
 }
