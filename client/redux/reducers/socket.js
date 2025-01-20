@@ -1,7 +1,4 @@
 const ADD_SOCKET = 'socket/ADD_SOCKET'
-// const SOCKET_CONNECTED = 'socket/SOCKET_CONNECTED'
-// const MESSAGE_RECEIVED = 'socket/MESSAGE_RECEIVED'
-// const SHOW_MESSAGE = 'socket/SHOW_MESSAGE'
 const REMOVE_SOCKET = 'socket/REMOVE_SOCKET'
 
 const initialState = {

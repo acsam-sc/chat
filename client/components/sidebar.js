@@ -1,8 +1,13 @@
 import React from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { signOutUser } from '../redux/reducers/auth'
 
 const Sidebar = () => {
+  const dispatch = useDispatch()
+  const myUsername = useSelector((state) => state.auth.username)
   return (
-    <div className="bg-purple-800 text-purple-300 w-1/5 pb-6 flex hidden md:block">
+    // <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:block">
+    <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col">
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
         <span>Tailwind CSS</span>
         <svg className="h-6 w-6 text-purple-100 fill-current" viewBox="0 0 32 32">
@@ -15,11 +20,11 @@ const Sidebar = () => {
         <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
         <span className="text-purple-100">Olivia</span>
       </div>
-      <div className="px-4 mb-2 font-sans">Channels</div>
+      <div className="flex px-4 mb-2 font-sans">Channels</div>
       <div className="bg-teal-500 mb-6 py-1 px-4 text-white font-semi-bold ">
         <span className="pr-1 text-gray-400">#</span>general
       </div>
-      <div className="px-4 mb-3 font-sans">Direct Messages</div>
+      <div className="flex px-4 mb-3 font-sans">Direct Messages</div>
       <div className="flex items-center mb-3 px-4">
         <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
         <span className="text-purple-100">
@@ -30,11 +35,20 @@ const Sidebar = () => {
         <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
         <span className="text-purple-100">Adam Bishop</span>
       </div>
-      <div className="flex items-center px-4 mb-6">
+      <div className="flex items-center mb-3 px-4">
         <span className="border rounded-full block w-2 h-2 mr-2" />
         <span className="text-purple-100">killgt</span>
       </div>
-      <div className="px-4 mb-3 font-sans">Applications</div>
+      <div className="flex flex-1 flex-col justify-end px-4 mb-3 items-center font-sans text-white">
+        <span
+          className="font-sans text-white cursor-pointer"
+          role="link"
+          tabIndex="0"
+          onMouseDown={() => dispatch(signOutUser(myUsername))}
+        >
+          Logout
+        </span>
+      </div>
     </div>
   )
 }

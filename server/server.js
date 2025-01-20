@@ -44,6 +44,7 @@ let connectedUsers = []
 
 const port = process.env.PORT || 8090
 const server = express()
+const picsDir = path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics')
 
 
 const middleware = [
@@ -60,7 +61,7 @@ passport.use('jwt', passportJWT.jwt)
 middleware.forEach((it) => server.use(it))
 // server.use('/api/v1/auth', formidable())
 
-if (!fs.existsSync(path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics'))) fs.mkdirSync(__dirname, '..', 'dist', 'assets', 'images', 'userpics')
+if (!fs.existsSync(picsDir)) fs.mkdirSync(picsDir)
 
 server.get('/api/v1/messages', async (req, res) => {
   
@@ -76,7 +77,7 @@ server.get('/api/v1/auth', async (req, res) => {
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
   } catch (err) {
     console.log(`Error on get '/api/v1/auth': ${err}`)
@@ -111,7 +112,7 @@ server.post('/api/v1/auth', async (req, res) => {
     const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
     delete user.password
     delete user['__v']
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
     res.json({ status: 'ok', token, user })
   } catch (err) {
     console.log(`Error on post '/api/v1/auth': ${err}`)
@@ -119,7 +120,7 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics')}), async (req, res) => {
+server.post('/api/v1/reg', formidable({uploadDir: path.join(picsDir)}), async (req, res) => {
   const { username, password } = req.fields
   console.log('/api/v1/reg', username, password)
   const tempUserPic = req.files.userpic.path
@@ -134,7 +135,7 @@ server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'di
           username,
           password
         })
-        const newPath = path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics', username) + '.jpg'
+        const newPath = path.join(picsDir, username) + '.jpg'
         const newUserPic = fs.readFileSync(tempUserPic)
         fs.writeFileSync(newPath, newUserPic)
         if (fs.existsSync(tempUserPic)) fs.unlinkSync(tempUserPic)
@@ -143,7 +144,7 @@ server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'di
         delete user['__v']
         const payload = { uid: user.id }
         const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
-        res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48, path: '/' })
+        res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
         res.json({ status: 'ok', token, user })
       } catch (err) {
         console.log(`Error on creating new user at '/api/v1/reg': ${err}`)

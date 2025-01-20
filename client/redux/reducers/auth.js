@@ -1,7 +1,8 @@
 import Cookies from 'universal-cookie'
 import { sendRegData, getAuth, sendAuthData, getOnlineUsers } from '../../api/auth'
 import { history } from '..'
-import { sendMessage, userLogIn } from './msg'
+import { sendMessage, userLogIn, userLogOut } from './msg'
+import { removeSocketFromState } from './socket'
 
 const SET_AUTH_ERROR = 'auth/SET_AUTH_ERROR'
 const SET_REG_ERROR = 'auth/SET_REG_ERROR'
@@ -66,7 +67,6 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
     formData.append('password', password)
     formData.append('userpic', userpic)
     await sendRegData(formData).then((res) => {
-      console.log('registerUser', JSON.stringify(res))
       if (res.data.status === 'error') {
         dispatch(setRegError(res.data.error))
       } else {
@@ -104,6 +104,16 @@ export const signInUser = (username, password) => async (dispatch) => {
     })
 }
 
+export const signOutUser = (username) => async (dispatch) => {
+  dispatch(sendMessage({ type: 'GOODBYE_MESSAGE', username }))
+  dispatch(removeSocketFromState())
+  dispatch(userLogOut(username))
+  dispatch(setUsername(''))
+  dispatch(setToken(''))
+  cookies.remove('token')
+  history.push('/login')
+}
+
 export const trySignIn = () => async (dispatch) => {
   // console.log('Trying SignIn')
   await getAuth()
@@ -114,16 +124,6 @@ export const trySignIn = () => async (dispatch) => {
     })
     .catch(() => history.push('/login'))
 }
-
-// export const tryGetUserInfo = () => async (dispatch) => {
-//   await axios.get('/api/v1/onlineusers').then((res) => {
-//   console.log('tryGetUserInfo', res.data.onlineUsers)
-//     res.data.onlineUsers.map((it) => {
-//       dispatch(userLogIn({ username: it.username }))
-//       return it
-//     })
-//   })
-// }
 
 export const tryGetUserInfo = () => async (dispatch) => {
   await getOnlineUsers().then((res) => {

@@ -20,7 +20,6 @@ const isSocketReady = (socket, callback) => {
 }
 
 export default (state = initialState, action) => {
-  // console.log('MSG REDUCER', action)
   switch (action.type) {
     case ADD_MESSAGE:
       return { ...state, messages: [...state.messages, action.payload] }
@@ -68,7 +67,7 @@ export const userLogOut = (message) => (dispatch) => {
   dispatch(userLogOutAC(message))
 }
 
-export const newMessageReceived = (message, onlineUsers) => (dispatch) => {
+export const newMessageReceived = (message) => (dispatch) => {
   const logInMessage = {
     type: 'SHOW_MESSAGE',
     channel: 'ALL',
@@ -87,19 +86,11 @@ export const newMessageReceived = (message, onlineUsers) => (dispatch) => {
   }
 
   if (message.type === 'USER_LOGIN') {
-    // const userpicToString = `data:${message.userpic.contentType};base64, ${Buffer.from(
-    //   message.userpic.data.data
-    // ).toString('base64')}`
-    // dispatch(userLogIn({ username: message.username, userpic: userpicToString }))
-    if (onlineUsers.findIndex((it) => it === message.username) < 0) {
-      dispatch(userLogIn(message))
-      dispatch(addMessageToState(logInMessage))
-      // dispatch(sendMessage(logInMessage, socket))
-    }
+    dispatch(userLogIn(message))
+    dispatch(addMessageToState(logInMessage))
   } else if (message.type === 'USER_LOGOUT') {
     dispatch(userLogOut(message))
     dispatch(addMessageToState(logOutMessage))
-    // dispatch(sendMessage(logOutMessage, socket))
   } else if (message.type === 'SHOW_MESSAGE') {
     dispatch(addMessageToState(message))
   }
