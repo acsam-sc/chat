@@ -1,7 +1,7 @@
 import Cookies from 'universal-cookie'
 import { sendRegData, getAuth, sendAuthData, getOnlineUsers } from '../../api/auth'
 import { history } from '..'
-import { sendMessage, userLogIn, userLogOut } from './msg'
+import { sendMessage, userLogIn, setOnlineUsers, cleanMsgReducer } from './msg'
 import { removeSocketFromState } from './socket'
 
 const SET_AUTH_ERROR = 'auth/SET_AUTH_ERROR'
@@ -66,15 +66,19 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
     formData.append('username', username)
     formData.append('password', password)
     formData.append('userpic', userpic)
-    await sendRegData(formData).then((res) => {
-      if (res.data.status === 'error') {
-        dispatch(setRegError(res.data.error))
-      } else {
-        dispatch(setUsername(res.data.user.username))
-        dispatch(setToken(res.data.token))
-        history.push('/chat')
-      }
-    })
+    await sendRegData(formData)
+      .then((res) => {
+        if (res.data.status === 'error') {
+          dispatch(setRegError(res.data.error))
+        } else {
+          dispatch(setUsername(username))
+          dispatch(setToken(res.data.token))
+          dispatch(setOnlineUsers())
+          history.push('/chat')
+        }
+      })
+      // eslint-disable-next-line no-console
+      .catch((err) => console.log('registerUser Error:', err))
   }
 }
 
@@ -92,24 +96,30 @@ export const signInUser = (username, password) => async (dispatch) => {
           'Content-Type': 'application/json'
         }
       }
-    ).then((res) => {
-      if (res.data.status === 'error') {
-        dispatch(setAuthError(res.data.error))
-      } else {
-        dispatch(setUsername(res.data.user.username))
-        dispatch(setToken(res.data.token))
-        dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-        history.push('/chat')
-      }
-    })
+    )
+      .then(async (res) => {
+        if (res.data.status === 'error') {
+          dispatch(setAuthError(res.data.error))
+        } else {
+          dispatch(setUsername(res.data.user.username))
+          dispatch(setToken(res.data.token))
+          dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+          dispatch(setOnlineUsers())
+          history.push('/chat')
+        }
+      })
+      // eslint-disable-next-line no-console
+      .catch((err) => console.log('signInUser Error:', err))
 }
 
-export const signOutUser = (username) => async (dispatch) => {
+export const signOutUser = (username) => async (dispatch, getState) => {
+  const { socket } = getState().socket
   dispatch(sendMessage({ type: 'GOODBYE_MESSAGE', username }))
   dispatch(removeSocketFromState())
-  dispatch(userLogOut(username))
+  dispatch(cleanMsgReducer())
   dispatch(setUsername(''))
   dispatch(setToken(''))
+  socket.close()
   cookies.remove('token')
   history.push('/login')
 }
@@ -118,19 +128,24 @@ export const trySignIn = () => async (dispatch) => {
   // console.log('Trying SignIn')
   await getAuth()
     .then((res) => {
-      dispatch(setUsername(res.data.user.username))
-      dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username }))
+      const { username } = res.data.user
+      dispatch(setUsername(username))
+      dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+      dispatch(setOnlineUsers())
       history.push('/chat')
     })
     .catch(() => history.push('/login'))
 }
 
 export const tryGetUserInfo = () => async (dispatch) => {
-  await getOnlineUsers().then((res) => {
-    // console.log('GettingOnlineUsers', res.data.onlineUsers)
-    res.data.onlineUsers.map((it) => {
-      dispatch(userLogIn({ username: it.username }))
-      return it
+  await getOnlineUsers()
+    .then((res) => {
+      // console.log('GettingOnlineUsers', res.data.onlineUsers)
+      res.data.onlineUsers.map((it) => {
+        dispatch(userLogIn(it.username))
+        return it
+      })
     })
-  })
+    // eslint-disable-next-line no-console
+    .catch((err) => console.log('tryGetUserInfo Error:', err))
 }

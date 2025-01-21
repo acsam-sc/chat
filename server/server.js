@@ -63,7 +63,7 @@ middleware.forEach((it) => server.use(it))
 
 if (!fs.existsSync(picsDir)) fs.mkdirSync(picsDir)
 
-server.get('/api/v1/messages', async (req, res) => {
+server.get('/api/v1/messages', auth([]), async (req, res) => {
   
 })
 
@@ -86,7 +86,8 @@ server.get('/api/v1/auth', async (req, res) => {
 })
 
 server.get('/api/v1/onlineusers', auth([]), async (req, res) => {
-  res.json({ status: 'ok', onlineUsers: connectedUsers })
+  const usersToSend = connectedUsers.map((it) => it.username)
+  res.json({ status: 'ok', onlineUsers: usersToSend })
 })
 
 server.get('/api/v1/user-info', async (req, res) => {
@@ -201,6 +202,18 @@ const broadcastUserMessage = (data, id) => {
   })
 }
 
+const broadcastInfoMessage = (type, username) => {
+  const timestamp = Date.now()
+  connections.forEach((c) => {
+    c.write(JSON.stringify({
+      type,
+      messageID: timestamp,
+      timestamp,
+      username
+    }))
+  })
+}
+
 if (config.isSocketsEnabled) {
   const echo = sockjs.createServer()
   echo.on('connection', (conn) => {
@@ -212,33 +225,26 @@ if (config.isSocketsEnabled) {
       if (parsedData.type === 'WELCOME_MESSAGE' &&
         parsedData.username &&
         (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
-          const timestamp = Date.now()
-          const user = await User.findOne({ username: parsedData.username }).exec()
+          // const user = await User.findOne({ username: parsedData.username }).exec()
           connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
-          connections.forEach((c) => {
-            c.write(JSON.stringify({
-              type: 'USER_LOGIN',
-              messageID: timestamp,
-              timestamp,
-              username: parsedData.username
-            }))
-          })
+          broadcastInfoMessage('USER_LOGIN', parsedData.username)
         }
+        // if (parsedData.type === 'GOODBYE_MESSAGE' &&
+        //   parsedData.username) {
+        //   // const connectedUsers = [{username: a, connID: 1}, {username: q, connID: 2}]
+        //   const userConnections = connectedUsers.filter((it) => it.username === parsedData.username)
+        //   userConnections.forEach(conn.)
+        //   // const userConnections = [{username: a, connID: 1}]
+        //   // connections = connections.filter((c) => userConnections.indexOf(c.connID) < 0)
+        //   connectedUsers.filter(it => it.username !== parsedData.username)
+        // }
     })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
       connectedUsers = connectedUsers.filter(it => {
         if (it.connID === conn.id) {
-          const timestamp = Date.now()
-          connections.forEach((c) => {
-            c.write(JSON.stringify({
-              type: 'USER_LOGOUT',
-              messageID: timestamp,
-              timestamp,
-              username: it.username
-            }))
-          })
+          broadcastInfoMessage('USER_LOGOUT', it.username)
           return false
         }
         return true
