@@ -68,7 +68,6 @@ server.get('/api/v1/messages', auth([]), async (req, res) => {
 })
 
 server.get('/api/v1/auth', async (req, res) => {
-  // console.log('get /api/v1/auth req.body', req.cookies)
   try {
     const jwtUser = jwt.verify(req.cookies.token, config.secret)
     const userDB = await User.findById(jwtUser.uid)
@@ -86,7 +85,8 @@ server.get('/api/v1/auth', async (req, res) => {
 })
 
 server.get('/api/v1/onlineusers', auth([]), async (req, res) => {
-  const usersToSend = connectedUsers.map((it) => it.username)
+  const connectedUsernames = connectedUsers.map((it) => it.username)
+  const usersToSend = connectedUsernames.filter((it, index) => connectedUsernames.indexOf(it) === index)
   res.json({ status: 'ok', onlineUsers: usersToSend })
 })
 
@@ -197,15 +197,15 @@ server.get('/*', (req, res) => {
 const app = server.listen(port)
 
 const broadcastUserMessage = (data, id) => {
-  connections.forEach((c) => {
-    if (c.id !== id) c.write(JSON.stringify(data))
+  connectedUsers.forEach((user) => {
+    if (user.conn.id !== id) user.conn.write(JSON.stringify(data))
   })
 }
 
 const broadcastInfoMessage = (type, username) => {
   const timestamp = Date.now()
-  connections.forEach((c) => {
-    c.write(JSON.stringify({
+  connectedUsers.forEach((user) => {
+    user.conn.write(JSON.stringify({
       type,
       messageID: timestamp,
       timestamp,
@@ -219,23 +219,23 @@ if (config.isSocketsEnabled) {
   echo.on('connection', (conn) => {
     connections.push(conn)
     
-    conn.on('data', async (data) => {
+    conn.on('data', (data) => {
       const parsedData = JSON.parse(data)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
-      if (parsedData.type === 'WELCOME_MESSAGE' &&
-        parsedData.username &&
-        (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
-          // const user = await User.findOne({ username: parsedData.username }).exec()
-          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
-          broadcastInfoMessage('USER_LOGIN', parsedData.username)
+      if (parsedData.type === 'WELCOME_MESSAGE' && parsedData.username) {
+          if (connectedUsers.findIndex((it) => it.username === parsedData.username) < 0) broadcastInfoMessage('USER_LOGIN', parsedData.username)
+          connectedUsers = [...connectedUsers, { username: parsedData.username, conn }]
+          console.log('connectedUsers AFTER', connectedUsers)
         }
     })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
+      const disconnectedUser = connectedUsers.find((it) => it.conn.id === conn.id)
       connectedUsers = connectedUsers.filter(it => {
-        if (it.connID === conn.id) {
-          broadcastInfoMessage('USER_LOGOUT', it.username)
+        if (it.conn.id === conn.id) {
+          // check if this is the last connection of user
+          if (connectedUsers.filter((it) => it.username === disconnectedUser.username).length === 1) broadcastInfoMessage('USER_LOGOUT', it.username)
           return false
         }
         return true

@@ -1,5 +1,5 @@
 import Cookies from 'universal-cookie'
-import { sendRegData, getAuth, sendAuthData, getOnlineUsers } from '../../api/auth'
+import { sendRegData, getAuth, sendAuthData } from '../../api/auth'
 import { history } from '..'
 import { sendMessage, userLogIn, setOnlineUsers, cleanMsgReducer } from './msg'
 import { removeSocketFromState } from './socket'
@@ -13,7 +13,6 @@ const cookies = new Cookies()
 
 const initialState = {
   username: '',
-  password: '',
   regError: null,
   authError: null,
   token: cookies.get('token')
@@ -28,8 +27,7 @@ export default (state = initialState, action) => {
     case SET_USERNAME:
       return {
         ...state,
-        username: action.payload.username,
-        password: ''
+        username: action.payload.username
       }
     case SET_TOKEN:
       return {
@@ -72,8 +70,10 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
           dispatch(setRegError(res.data.error))
         } else {
           dispatch(setUsername(username))
+          dispatch(userLogIn(username))
           dispatch(setToken(res.data.token))
-          dispatch(setOnlineUsers())
+          dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+          dispatch(setOnlineUsers(username))
           history.push('/chat')
         }
       })
@@ -101,10 +101,11 @@ export const signInUser = (username, password) => async (dispatch) => {
         if (res.data.status === 'error') {
           dispatch(setAuthError(res.data.error))
         } else {
-          dispatch(setUsername(res.data.user.username))
+          dispatch(setUsername(username))
+          dispatch(userLogIn(username))
           dispatch(setToken(res.data.token))
           dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-          dispatch(setOnlineUsers())
+          dispatch(setOnlineUsers(username))
           history.push('/chat')
         }
       })
@@ -124,27 +125,27 @@ export const signOutUser = () => async (dispatch, getState) => {
 }
 
 export const trySignIn = () => async (dispatch) => {
-  // console.log('Trying SignIn')
   await getAuth()
     .then((res) => {
       const { username } = res.data.user
       dispatch(setUsername(username))
+      dispatch(userLogIn(username))
       dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-      dispatch(setOnlineUsers())
+      dispatch(setOnlineUsers(username))
       history.push('/chat')
     })
     .catch(() => history.push('/login'))
 }
 
-export const tryGetUserInfo = () => async (dispatch) => {
-  await getOnlineUsers()
-    .then((res) => {
-      // console.log('GettingOnlineUsers', res.data.onlineUsers)
-      res.data.onlineUsers.map((it) => {
-        dispatch(userLogIn(it.username))
-        return it
-      })
-    })
-    // eslint-disable-next-line no-console
-    .catch((err) => console.log('tryGetUserInfo Error:', err))
-}
+// export const tryGetUserInfo = () => async (dispatch) => {
+//   await getOnlineUsers()
+//     .then((res) => {
+//       // console.log('GettingOnlineUsers', res.data.onlineUsers)
+//       res.data.onlineUsers.map((it) => {
+//         dispatch(userLogIn(it.username))
+//         return it
+//       })
+//     })
+//     // eslint-disable-next-line no-console
+//     .catch((err) => console.log('tryGetUserInfo Error:', err))
+// }

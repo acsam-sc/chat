@@ -4,8 +4,9 @@ import { signOutUser } from '../redux/reducers/auth'
 
 const Sidebar = () => {
   const dispatch = useDispatch()
-  const myUsername = useSelector((state) => state.auth.username)
+  // const myUsername = useSelector((state) => state.auth.username)
   const onlineUsers = useSelector((state) => state.msg.onlineUsers)
+  const { socket } = useSelector((state) => state.socket)
   return (
     <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:flex">
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
@@ -35,7 +36,7 @@ const Sidebar = () => {
           className="flex justify-end mb-3 items-center font-sans text-white cursor-pointer"
           role="link"
           tabIndex="0"
-          onMouseDown={() => dispatch(signOutUser(myUsername))}
+          onMouseDown={() => dispatch(signOutUser(socket))}
         >
           <span>Logout</span>
           <span className="ml-1">

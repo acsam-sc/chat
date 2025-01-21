@@ -40,16 +40,10 @@ export default (state = initialState, action) => {
     case SET_ONLINEUSERS:
       return {
         ...state,
-        onlineUsers: state.onlineUsers.concat(
-          action.payload.filter((it) => state.onlineUsers.indexOf(it) < 0)
-        )
+        onlineUsers: [...state.onlineUsers, ...action.payload]
       }
     case CLEAN_MSG_REDUCER:
-      return {
-        ...state,
-        onlineUsers: [],
-        messages: []
-      }
+      return initialState
     default:
       return state
   }
@@ -89,11 +83,12 @@ export const userLogOut = (username) => (dispatch) => {
   dispatch(userLogOutAC(username))
 }
 
-export const setOnlineUsers = () => async (dispatch) => {
+export const setOnlineUsers = (username) => async (dispatch) => {
   await getOnlineUsers()
     .then((res) => {
       const { onlineUsers } = res.data
-      dispatch(setOnlineUsersAC(onlineUsers))
+      const onlineUsersToSet = onlineUsers.filter((it) => it !== username)
+      dispatch(setOnlineUsersAC(onlineUsersToSet))
     })
     // eslint-disable-next-line no-console
     .catch(console.log('setOnlineUsers: Error getting online users from server'))
@@ -103,7 +98,7 @@ export const cleanMsgReducer = () => (dispatch) => {
   dispatch(cleanMsgReducerAC())
 }
 
-export const newMessageReceived = (message) => (dispatch) => {
+export const newMessageReceived = (message) => (dispatch, getState) => {
   const logInMessage = {
     type: 'SHOW_MESSAGE',
     channel: 'ALL',
@@ -122,7 +117,7 @@ export const newMessageReceived = (message) => (dispatch) => {
   }
 
   if (message.type === 'USER_LOGIN') {
-    dispatch(userLogIn(message.username))
+    if (getState().auth.username !== message.username) dispatch(userLogIn(message.username))
     dispatch(addMessageToState(logInMessage))
   } else if (message.type === 'USER_LOGOUT') {
     dispatch(userLogOut(message.username))
