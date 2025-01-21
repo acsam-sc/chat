@@ -1,10 +1,11 @@
 import React from 'react'
+import classNames from 'classnames'
 import { useSelector, useDispatch } from 'react-redux'
 import { signOutUser } from '../redux/reducers/auth'
 
 const Sidebar = () => {
   const dispatch = useDispatch()
-  // const myUsername = useSelector((state) => state.auth.username)
+  const myUsername = useSelector((state) => state.auth.username)
   const onlineUsers = useSelector((state) => state.msg.onlineUsers)
   const { socket } = useSelector((state) => state.socket)
   return (
@@ -27,7 +28,13 @@ const Sidebar = () => {
           return (
             <div className="flex items-center mb-3 px-4" key={user}>
               <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
-              <span className="text-purple-100">{user}</span>
+              <span
+                className={classNames(
+                  user === myUsername ? 'text-white font-bold' : 'text-purple-100'
+                )}
+              >
+                {user}
+              </span>
             </div>
           )
         })}
