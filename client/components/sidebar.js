@@ -30,15 +30,33 @@ const Sidebar = () => {
             </div>
           )
         })}
-      <div className="flex flex-1 flex-col justify-end px-4 mb-3 items-center font-sans text-white">
-        <span
-          className="font-sans text-white cursor-pointer"
+      <div className="flex flex-1 flex-col justify-end px-4 mb-3 items-center">
+        <div
+          className="flex justify-end mb-3 items-center font-sans text-white cursor-pointer"
           role="link"
           tabIndex="0"
           onMouseDown={() => dispatch(signOutUser(myUsername))}
         >
-          Logout
-        </span>
+          <span>Logout</span>
+          <span className="ml-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="24"
+              height="24"
+              strokeWidth="2"
+            >
+              <path d="M13 12v.01" />
+              <path d="M3 21h18" />
+              <path d="M5 21v-16a2 2 0 0 1 2 -2h7.5m2.5 10.5v7.5" />
+              <path d="M14 7h7m-3 -3l3 3l-3 3" />
+            </svg>
+          </span>
+        </div>
       </div>
     </div>
   )

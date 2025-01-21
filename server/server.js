@@ -229,15 +229,6 @@ if (config.isSocketsEnabled) {
           connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
           broadcastInfoMessage('USER_LOGIN', parsedData.username)
         }
-        // if (parsedData.type === 'GOODBYE_MESSAGE' &&
-        //   parsedData.username) {
-        //   // const connectedUsers = [{username: a, connID: 1}, {username: q, connID: 2}]
-        //   const userConnections = connectedUsers.filter((it) => it.username === parsedData.username)
-        //   userConnections.forEach(conn.)
-        //   // const userConnections = [{username: a, connID: 1}]
-        //   // connections = connections.filter((c) => userConnections.indexOf(c.connID) < 0)
-        //   connectedUsers.filter(it => it.username !== parsedData.username)
-        // }
     })
 
     conn.on('close', () => {

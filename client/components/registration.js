@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import classNames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
+import { Link } from 'react-router-dom'
 import { registerUser, setRegError } from '../redux/reducers/auth'
 
 const RegistrationPage = () => {
@@ -10,6 +11,7 @@ const RegistrationPage = () => {
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [userpicFile, setUserPicFile] = useState('')
+  const isRegButtonDisabled = !username || !password || !repeatPassword || !userpicFile || regError
   const handlePicFileChange = (e) => {
     dispatch(setRegError(null))
     if (e.target.files[0] && e.target.files[0].size > 2097152) {
@@ -18,11 +20,14 @@ const RegistrationPage = () => {
       setUserPicFile(e.target.files[0])
     }
   }
-
-  const isRegButtonDisabled = !username || !password || !repeatPassword || !userpicFile || regError
-
   const handleRegisterButtonClick = () => {
     dispatch(registerUser(username, password, repeatPassword, userpicFile))
+  }
+  const handleOnKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      if (!isRegButtonDisabled) handleRegisterButtonClick()
+    }
   }
 
   return (
@@ -47,6 +52,7 @@ const RegistrationPage = () => {
                 setUsername(e.target.value)
                 dispatch(setRegError(null))
               }}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
           </div>
           <div className="mb-6">
@@ -67,6 +73,7 @@ const RegistrationPage = () => {
                 setPassword(e.target.value)
                 dispatch(setRegError(null))
               }}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="repeat_password">
               Repeat Password
@@ -85,6 +92,7 @@ const RegistrationPage = () => {
                 setRepeatPassword(e.target.value)
                 dispatch(setRegError(null))
               }}
+              onKeyPress={(e) => handleOnKeyPress(e)}
             />
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="userpic">
@@ -104,7 +112,7 @@ const RegistrationPage = () => {
             </div>
             {regError && <p className="text-red-500 text-xs italic">{regError}</p>}
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-around">
             <button
               disabled={isRegButtonDisabled}
               className={classNames(
@@ -117,6 +125,12 @@ const RegistrationPage = () => {
             >
               Register
             </button>
+            <Link
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+              to="/login"
+            >
+              Cancel
+            </Link>
           </div>
         </form>
       </div>

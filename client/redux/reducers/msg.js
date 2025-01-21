@@ -110,7 +110,7 @@ export const newMessageReceived = (message) => (dispatch) => {
     messageID: message.messageID,
     timestamp: message.timestamp,
     username: 'ChatInfo',
-    message: `${message.username} just logged in`
+    message: `${message.username} logged in`
   }
   const logOutMessage = {
     type: 'SHOW_MESSAGE',
@@ -118,7 +118,7 @@ export const newMessageReceived = (message) => (dispatch) => {
     messageID: message.messageID,
     timestamp: message.timestamp,
     username: 'ChatInfo',
-    message: `${message.username} just logged out`
+    message: `${message.username} logged out`
   }
 
   if (message.type === 'USER_LOGIN') {
