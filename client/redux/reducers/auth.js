@@ -113,8 +113,7 @@ export const signInUser = (username, password) => async (dispatch) => {
       .catch((err) => console.log('signInUser Error:', err))
 }
 
-export const signOutUser = () => async (dispatch, getState) => {
-  const { socket } = getState().socket
+export const signOutUser = (socket) => async (dispatch) => {
   dispatch(removeSocketFromState())
   dispatch(cleanMsgReducer())
   dispatch(setUsername(''))

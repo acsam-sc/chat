@@ -91,7 +91,6 @@ server.get('/api/v1/onlineusers', auth([]), async (req, res) => {
 })
 
 server.get('/api/v1/user-info', async (req, res) => {
-  console.log('/api/v1/user-info req.body', req.body)
   try {
     const userDB = await User.findUser(req.body)
     const user = userDB.toObject()
@@ -225,7 +224,6 @@ if (config.isSocketsEnabled) {
       if (parsedData.type === 'WELCOME_MESSAGE' && parsedData.username) {
           if (connectedUsers.findIndex((it) => it.username === parsedData.username) < 0) broadcastInfoMessage('USER_LOGIN', parsedData.username)
           connectedUsers = [...connectedUsers, { username: parsedData.username, conn }]
-          console.log('connectedUsers AFTER', connectedUsers)
         }
     })
 

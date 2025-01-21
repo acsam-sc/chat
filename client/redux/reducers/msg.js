@@ -91,14 +91,14 @@ export const setOnlineUsers = (username) => async (dispatch) => {
       dispatch(setOnlineUsersAC(onlineUsersToSet))
     })
     // eslint-disable-next-line no-console
-    .catch(console.log('setOnlineUsers: Error getting online users from server'))
+    .catch((err) => console.log('setOnlineUsers: Error getting online users from server:', err))
 }
 
 export const cleanMsgReducer = () => (dispatch) => {
   dispatch(cleanMsgReducerAC())
 }
 
-export const newMessageReceived = (message) => (dispatch, getState) => {
+export const newMessageReceived = (message, localUsername) => (dispatch) => {
   const logInMessage = {
     type: 'SHOW_MESSAGE',
     channel: 'ALL',
@@ -117,7 +117,7 @@ export const newMessageReceived = (message) => (dispatch, getState) => {
   }
 
   if (message.type === 'USER_LOGIN') {
-    if (getState().auth.username !== message.username) dispatch(userLogIn(message.username))
+    if (localUsername !== message.username) dispatch(userLogIn(message.username))
     dispatch(addMessageToState(logInMessage))
   } else if (message.type === 'USER_LOGOUT') {
     dispatch(userLogOut(message.username))

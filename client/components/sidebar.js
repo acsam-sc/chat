@@ -23,7 +23,7 @@ const Sidebar = () => {
       </div>
       <div className="flex px-4 mb-2 font-sans">Users:</div>
       {onlineUsers.length > 0 &&
-        onlineUsers.map((user) => {
+        onlineUsers.sort().map((user) => {
           return (
             <div className="flex items-center mb-3 px-4" key={user}>
               <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />

@@ -35,7 +35,8 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
 
     socket.onmessage = (message) => {
       const parsedData = JSON.parse(message.data)
-      store.dispatch(newMessageReceived(parsedData))
+      const { localUsername } = store.getState().auth
+      store.dispatch(newMessageReceived(parsedData, localUsername))
     }
 
     socket.onclose = () => {
