@@ -1,8 +1,15 @@
 import React from 'react'
+import classNames from 'classnames'
+import { useSelector, useDispatch } from 'react-redux'
+import { signOutUser } from '../redux/reducers/auth'
 
 const Sidebar = () => {
+  const dispatch = useDispatch()
+  const myUsername = useSelector((state) => state.auth.username)
+  const onlineUsers = useSelector((state) => state.msg.onlineUsers)
+  const { socket } = useSelector((state) => state.socket)
   return (
-    <div className="bg-purple-800 text-purple-300 w-1/5 pb-6 flex hidden md:block">
+    <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:flex">
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
         <span>Tailwind CSS</span>
         <svg className="h-6 w-6 text-purple-100 fill-current" viewBox="0 0 32 32">
@@ -11,30 +18,54 @@ const Sidebar = () => {
           </g>
         </svg>
       </h1>
-      <div className="flex items-center mb-6 px-4">
-        <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
-        <span className="text-purple-100">Olivia</span>
-      </div>
-      <div className="px-4 mb-2 font-sans">Channels</div>
+      <div className="flex px-4 mb-2 font-sans">Channels</div>
       <div className="bg-teal-500 mb-6 py-1 px-4 text-white font-semi-bold ">
         <span className="pr-1 text-gray-400">#</span>general
       </div>
-      <div className="px-4 mb-3 font-sans">Direct Messages</div>
-      <div className="flex items-center mb-3 px-4">
-        <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
-        <span className="text-purple-100">
-          Olivia Dunham <i className="text-gray-500 text-sm">(me)</i>
-        </span>
+      <div className="flex px-4 mb-2 font-sans">Users:</div>
+      {onlineUsers.length > 0 &&
+        onlineUsers.sort().map((user) => {
+          return (
+            <div className="flex items-center mb-3 px-4" key={user}>
+              <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
+              <span
+                className={classNames(
+                  user === myUsername ? 'text-white font-bold' : 'text-purple-100'
+                )}
+              >
+                {user}
+              </span>
+            </div>
+          )
+        })}
+      <div className="flex flex-1 flex-col justify-end px-4 mb-3 items-center">
+        <div
+          className="flex justify-end mb-3 items-center font-sans text-white cursor-pointer"
+          role="link"
+          tabIndex="0"
+          onMouseDown={() => dispatch(signOutUser(socket))}
+        >
+          <span>Logout</span>
+          <span className="ml-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="24"
+              height="24"
+              strokeWidth="2"
+            >
+              <path d="M13 12v.01" />
+              <path d="M3 21h18" />
+              <path d="M5 21v-16a2 2 0 0 1 2 -2h7.5m2.5 10.5v7.5" />
+              <path d="M14 7h7m-3 -3l3 3l-3 3" />
+            </svg>
+          </span>
+        </div>
       </div>
-      <div className="flex items-center mb-3 px-4">
-        <span className="bg-green-500 rounded-full block w-2 h-2 mr-2" />
-        <span className="text-purple-100">Adam Bishop</span>
-      </div>
-      <div className="flex items-center px-4 mb-6">
-        <span className="border rounded-full block w-2 h-2 mr-2" />
-        <span className="text-purple-100">killgt</span>
-      </div>
-      <div className="px-4 mb-3 font-sans">Applications</div>
     </div>
   )
 }

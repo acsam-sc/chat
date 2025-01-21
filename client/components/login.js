@@ -1,17 +1,19 @@
 import React, { useState } from 'react'
+import classNames from 'classnames'
 import { useDispatch, useSelector } from 'react-redux'
-import { signInUser } from '../redux/reducers/auth'
+import { Link } from 'react-router-dom'
+import { signInUser, setAuthError } from '../redux/reducers/auth'
 
 const LoginPage = () => {
   const dispatch = useDispatch()
   const { authError } = useSelector((state) => state.auth)
-  const { socket } = useSelector((state) => state)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const isSignInButtonDisabled = !username || !password || authError
   const handleOnKeyPress = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
-      dispatch(signInUser(username, password, socket))
+      if (!isSignInButtonDisabled) dispatch(signInUser(username, password))
     }
   }
 
@@ -24,12 +26,19 @@ const LoginPage = () => {
               Username
             </label>
             <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={classNames(
+                authError
+                  ? 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border-red-500'
+                  : 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+              )}
               id="username"
               type="text"
               value={username}
               placeholder="Username"
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value)
+                dispatch(setAuthError(''))
+              }}
               onKeyPress={(e) => handleOnKeyPress(e)}
             />
           </div>
@@ -38,24 +47,42 @@ const LoginPage = () => {
               Password
             </label>
             <input
-              className="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+              className={classNames(
+                authError
+                  ? 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border-red-500'
+                  : 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+              )}
               id="password"
               type="password"
               value={password}
               placeholder="******************"
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                dispatch(setAuthError(''))
+              }}
               onKeyPress={(e) => handleOnKeyPress(e)}
             />
             {authError && <p className="text-red-500 text-xs italic">{authError}</p>}
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-around">
             <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              disabled={isSignInButtonDisabled}
+              className={classNames(
+                isSignInButtonDisabled
+                  ? 'bg-gray-400 text-white font-bold py-2 px-4 rounded'
+                  : 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline'
+              )}
               type="button"
-              onClick={() => dispatch(signInUser(username, password, socket))}
+              onClick={() => dispatch(signInUser(username, password))}
             >
               Sign In
             </button>
+            <Link
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+              to="/registration"
+            >
+              Register
+            </Link>
           </div>
         </form>
       </div>

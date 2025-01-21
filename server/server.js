@@ -44,6 +44,7 @@ let connectedUsers = []
 
 const port = process.env.PORT || 8090
 const server = express()
+const picsDir = path.join(__dirname, '..', 'dist', 'assets', 'images', 'userpics')
 
 
 const middleware = [
@@ -60,14 +61,13 @@ passport.use('jwt', passportJWT.jwt)
 middleware.forEach((it) => server.use(it))
 // server.use('/api/v1/auth', formidable())
 
-if (!fs.existsSync(path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics'))) fs.mkdirSync(__dirname, '..', 'client', 'assets', 'images', 'userpics')
+if (!fs.existsSync(picsDir)) fs.mkdirSync(picsDir)
 
-server.get('/api/v1/messages', async (req, res) => {
+server.get('/api/v1/messages', auth([]), async (req, res) => {
   
 })
 
 server.get('/api/v1/auth', async (req, res) => {
-  console.log('get /api/v1/auth req.body', req.cookies)
   try {
     const jwtUser = jwt.verify(req.cookies.token, config.secret)
     const userDB = await User.findById(jwtUser.uid)
@@ -85,11 +85,12 @@ server.get('/api/v1/auth', async (req, res) => {
 })
 
 server.get('/api/v1/onlineusers', auth([]), async (req, res) => {
-  res.json({ status: 'ok', onlineUsers: connectedUsers })
+  const connectedUsernames = connectedUsers.map((it) => it.username)
+  const usersToSend = connectedUsernames.filter((it, index) => connectedUsernames.indexOf(it) === index)
+  res.json({ status: 'ok', onlineUsers: usersToSend })
 })
 
 server.get('/api/v1/user-info', async (req, res) => {
-  console.log('/api/v1/user-info req.body', req.body)
   try {
     const userDB = await User.findUser(req.body)
     const user = userDB.toObject()
@@ -103,7 +104,6 @@ server.get('/api/v1/user-info', async (req, res) => {
 })
 
 server.post('/api/v1/auth', async (req, res) => {
-  console.log('/api/v1/auth req.body', req.body)
   try {
     const userDB = await User.findAndValidateUser(req.body)
     const user = userDB.toObject()
@@ -119,33 +119,38 @@ server.post('/api/v1/auth', async (req, res) => {
   }
 })
 
-server.post('/api/v1/reg', formidable({uploadDir: path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics')}), async (req, res) => {
+server.post('/api/v1/reg', formidable({uploadDir: path.join(picsDir)}), async (req, res) => {
   const { username, password } = req.fields
-  const userDB = await User.findUser(username)
-  if (!userDB) {
-    res.json({ status: 'error', error: 'User exists' })
-    console.log(`/api/v1/reg req.files.userpic.path: ${req.files.userpic.path}`)
-    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
-  } else try {
-    const user = new User({
-      username,
-      password
-    })
-    const oldPath = req.files.userpic.path
-    const newPath = path.join(__dirname, '..', 'client', 'assets', 'images', 'userpics', username) + '.jpg'
-    const rawData = fs.readFileSync(oldPath)
-    fs.writeFileSync(newPath, rawData)
-    if (fs.existsSync(req.files.userpic.path)) fs.unlinkSync(req.files.userpic.path)
-    user.save()
-    delete user.password
-    delete user['__v']
-    const payload = { uid: user.id }
-    const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
-    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
-    res.json({ status: 'ok', token, user })
+  console.log('/api/v1/reg', username, password)
+  const tempUserPic = req.files.userpic.path
+  try {
+    const userDB = await User.findUser({ username })
+    if (userDB) res.json({ status: 'error', error: 'User already exists' })
+    if (fs.existsSync(tempUserPic)) fs.unlinkSync(tempUserPic)
   } catch (err) {
-    console.log(`Error on post '/api/v1/reg': ${err}`)
-    res.json({ status: 'error', error: err.message })
+    if (err.message === 'User not found') {
+      try {
+        const user = new User({
+          username,
+          password
+        })
+        const newPath = path.join(picsDir, username) + '.jpg'
+        const newUserPic = fs.readFileSync(tempUserPic)
+        fs.writeFileSync(newPath, newUserPic)
+        if (fs.existsSync(tempUserPic)) fs.unlinkSync(tempUserPic)
+        user.save()
+        delete user.password
+        delete user['__v']
+        const payload = { uid: user.id }
+        const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
+        res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
+        res.json({ status: 'ok', token, user })
+      } catch (err) {
+        console.log(`Error on creating new user at '/api/v1/reg': ${err}`)
+      }
+    } else {
+      res.json({ status: 'error', error: err.message })
+    }
   }
 })
 
@@ -190,8 +195,20 @@ server.get('/*', (req, res) => {
 const app = server.listen(port)
 
 const broadcastUserMessage = (data, id) => {
-  connections.forEach((c) => {
-    if (c.id !== id) c.write(JSON.stringify(data))
+  connectedUsers.forEach((user) => {
+    if (user.conn.id !== id) user.conn.write(JSON.stringify(data))
+  })
+}
+
+const broadcastInfoMessage = (type, username) => {
+  const timestamp = Date.now()
+  connectedUsers.forEach((user) => {
+    user.conn.write(JSON.stringify({
+      type,
+      messageID: timestamp,
+      timestamp,
+      username
+    }))
   })
 }
 
@@ -200,39 +217,22 @@ if (config.isSocketsEnabled) {
   echo.on('connection', (conn) => {
     connections.push(conn)
     
-    conn.on('data', async (data) => {
+    conn.on('data', (data) => {
       const parsedData = JSON.parse(data)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
-      if (parsedData.type === 'WELCOME_MESSAGE' &&
-        parsedData.username &&
-        (connectedUsers.findIndex(it => it.connID === conn.id) < 0)) {
-          const timestamp = Date.now()
-          const user = await User.findOne({ username: parsedData.username }).exec()
-          connectedUsers = [...connectedUsers, { username: parsedData.username, connID: conn.id }]
-          connections.forEach((c) => {
-            c.write(JSON.stringify({
-              type: 'USER_LOGIN',
-              messageID: timestamp,
-              timestamp,
-              username: parsedData.username
-            }))
-          })
+      if (parsedData.type === 'WELCOME_MESSAGE' && parsedData.username) {
+          if (connectedUsers.findIndex((it) => it.username === parsedData.username) < 0) broadcastInfoMessage('USER_LOGIN', parsedData.username)
+          connectedUsers = [...connectedUsers, { username: parsedData.username, conn }]
         }
     })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
+      const disconnectedUser = connectedUsers.find((it) => it.conn.id === conn.id)
       connectedUsers = connectedUsers.filter(it => {
-        if (it.connID === conn.id) {
-          const timestamp = Date.now()
-          connections.forEach((c) => {
-            c.write(JSON.stringify({
-              type: 'USER_LOGOUT',
-              messageID: timestamp,
-              timestamp,
-              username: it.username
-            }))
-          })
+        if (it.conn.id === conn.id) {
+          // check if this is the last connection of user
+          if (connectedUsers.filter((it) => it.username === disconnectedUser.username).length === 1) broadcastInfoMessage('USER_LOGOUT', it.username)
           return false
         }
         return true

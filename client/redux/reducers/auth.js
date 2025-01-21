@@ -1,7 +1,8 @@
 import Cookies from 'universal-cookie'
-import { sendRegData, getAuth, sendAuthData, getOnlineUsers } from '../../api/auth'
+import { sendRegData, getAuth, sendAuthData } from '../../api/auth'
 import { history } from '..'
-import { sendMessage, userLogIn } from './msg'
+import { sendMessage, userLogIn, setOnlineUsers, cleanMsgReducer } from './msg'
+import { removeSocketFromState } from './socket'
 
 const SET_AUTH_ERROR = 'auth/SET_AUTH_ERROR'
 const SET_REG_ERROR = 'auth/SET_REG_ERROR'
@@ -12,14 +13,12 @@ const cookies = new Cookies()
 
 const initialState = {
   username: '',
-  password: '',
   regError: null,
   authError: null,
   token: cookies.get('token')
 }
 
 export default (state = initialState, action) => {
-  // console.log('auth reducer state', action)
   switch (action.type) {
     case SET_REG_ERROR:
       return { ...state, regError: action.payload }
@@ -28,8 +27,7 @@ export default (state = initialState, action) => {
     case SET_USERNAME:
       return {
         ...state,
-        username: action.payload.username,
-        password: ''
+        username: action.payload.username
       }
     case SET_TOKEN:
       return {
@@ -59,26 +57,28 @@ export const setToken = (token) => {
 
 export const registerUser = (username, password, repeatPassword, userpic) => async (dispatch) => {
   dispatch(setRegError(null))
-  if (!username) {
-    dispatch(setRegError('Username cannot be empty'))
-  } else if (!password) {
-    dispatch(setRegError('Password cannot be empty'))
-  } else if (password !== repeatPassword) {
+  if (password !== repeatPassword) {
     dispatch(setRegError('Passwords do not match'))
   } else {
     const formData = new FormData()
     formData.append('username', username)
     formData.append('password', password)
     formData.append('userpic', userpic)
-    await sendRegData(formData).then((res) => {
-      if (res.data.status === 'error') {
-        dispatch(setRegError(res.data.error))
-      } else {
-        dispatch(setUsername(res.data.user.username))
-        dispatch(setToken(res.data.token))
-        history.push('/login')
-      }
-    })
+    await sendRegData(formData)
+      .then((res) => {
+        if (res.data.status === 'error') {
+          dispatch(setRegError(res.data.error))
+        } else {
+          dispatch(setUsername(username))
+          dispatch(userLogIn(username))
+          dispatch(setToken(res.data.token))
+          dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+          dispatch(setOnlineUsers(username))
+          history.push('/chat')
+        }
+      })
+      // eslint-disable-next-line no-console
+      .catch((err) => console.log('registerUser Error:', err))
   }
 }
 
@@ -96,45 +96,55 @@ export const signInUser = (username, password) => async (dispatch) => {
           'Content-Type': 'application/json'
         }
       }
-    ).then((res) => {
-      if (res.data.status === 'error') {
-        dispatch(setAuthError(res.data.error))
-      } else {
-        dispatch(setUsername(res.data.user.username))
-        dispatch(setToken(res.data.token))
-        dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-        history.push('/chat')
-      }
-    })
+    )
+      .then(async (res) => {
+        if (res.data.status === 'error') {
+          dispatch(setAuthError(res.data.error))
+        } else {
+          dispatch(setUsername(username))
+          dispatch(userLogIn(username))
+          dispatch(setToken(res.data.token))
+          dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+          dispatch(setOnlineUsers(username))
+          history.push('/chat')
+        }
+      })
+      // eslint-disable-next-line no-console
+      .catch((err) => console.log('signInUser Error:', err))
+}
+
+export const signOutUser = (socket) => async (dispatch) => {
+  dispatch(removeSocketFromState())
+  dispatch(cleanMsgReducer())
+  dispatch(setUsername(''))
+  dispatch(setToken(''))
+  socket.close()
+  cookies.remove('token')
+  history.push('/login')
 }
 
 export const trySignIn = () => async (dispatch) => {
-  // console.log('Trying SignIn')
   await getAuth()
     .then((res) => {
-      dispatch(setUsername(res.data.user.username))
-      dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username: res.data.user.username }))
+      const { username } = res.data.user
+      dispatch(setUsername(username))
+      dispatch(userLogIn(username))
+      dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
+      dispatch(setOnlineUsers(username))
       history.push('/chat')
     })
     .catch(() => history.push('/login'))
 }
 
 // export const tryGetUserInfo = () => async (dispatch) => {
-//   await axios.get('/api/v1/onlineusers').then((res) => {
-//   console.log('tryGetUserInfo', res.data.onlineUsers)
-//     res.data.onlineUsers.map((it) => {
-//       dispatch(userLogIn({ username: it.username }))
-//       return it
+//   await getOnlineUsers()
+//     .then((res) => {
+//       // console.log('GettingOnlineUsers', res.data.onlineUsers)
+//       res.data.onlineUsers.map((it) => {
+//         dispatch(userLogIn(it.username))
+//         return it
+//       })
 //     })
-//   })
+//     // eslint-disable-next-line no-console
+//     .catch((err) => console.log('tryGetUserInfo Error:', err))
 // }
-
-export const tryGetUserInfo = () => async (dispatch) => {
-  await getOnlineUsers().then((res) => {
-    // console.log('GettingOnlineUsers', res.data.onlineUsers)
-    res.data.onlineUsers.map((it) => {
-      dispatch(userLogIn({ username: it.username }))
-      return it
-    })
-  })
-}

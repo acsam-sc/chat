@@ -24,7 +24,6 @@ const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
 const PrivateRoute = ({ component: Component, ...rest }) => {
   const auth = useSelector((s) => s.auth)
   const func = (props) =>
-    // !!auth.username && !!auth.token ? (
     auth.username && auth.token ? (
       <Component {...props} />
     ) : (

@@ -4,12 +4,10 @@ import Chat from './chat'
 
 const Body = () => {
   return (
-    // <div className="flex w-full h-full">
     <>
       <Sidebar />
       <Chat />
     </>
-    // </div>
   )
 }
 

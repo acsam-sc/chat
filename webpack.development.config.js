@@ -178,6 +178,9 @@ const config = {
 
   plugins: [
     new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.WatchIgnorePlugin([
+      resolve(__dirname, 'dist/assets/images/userpics')
+    ]),
     new MiniCssExtractPlugin({
       filename: 'css/main.css',
       chunkFilename: 'css/[id].css',

@@ -9,7 +9,6 @@ const Chat = () => {
   const reversedMessages = [...messages].reverse()
 
   return (
-    // <div className="w-full h-full flex flex-col">
     <div className="w-full flex flex-col flex-grow">
       <TopBar />
       <ChatMessages reversedMessages={reversedMessages} />
