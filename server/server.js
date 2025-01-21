@@ -104,7 +104,6 @@ server.get('/api/v1/user-info', async (req, res) => {
 })
 
 server.post('/api/v1/auth', async (req, res) => {
-  console.log('/api/v1/auth req.body', req.body)
   try {
     const userDB = await User.findAndValidateUser(req.body)
     const user = userDB.toObject()
