@@ -67,5 +67,6 @@ dist
 yarn-error.log
 *.csv
 logs.json
+.gitignore
 
 client/assets/images/userpics
