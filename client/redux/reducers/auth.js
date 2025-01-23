@@ -1,8 +1,7 @@
 import Cookies from 'universal-cookie'
 import { sendRegData, getAuth, sendAuthData } from '../../api/auth'
 import { history } from '..'
-import { sendMessage, userLogIn, setOnlineUsers, cleanMsgReducer } from './msg'
-import { removeSocketFromState } from './socket'
+import { sendMessage, userLogIn, cleanMsgReducer } from './msg'
 
 const SET_AUTH_ERROR = 'auth/SET_AUTH_ERROR'
 const SET_REG_ERROR = 'auth/SET_REG_ERROR'
@@ -73,7 +72,6 @@ export const registerUser = (username, password, repeatPassword, userpic) => asy
           dispatch(userLogIn(username))
           dispatch(setToken(res.data.token))
           dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-          dispatch(setOnlineUsers(username))
           history.push('/chat')
         }
       })
@@ -105,7 +103,6 @@ export const signInUser = (username, password) => async (dispatch) => {
           dispatch(userLogIn(username))
           dispatch(setToken(res.data.token))
           dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-          dispatch(setOnlineUsers(username))
           history.push('/chat')
         }
       })
@@ -114,7 +111,6 @@ export const signInUser = (username, password) => async (dispatch) => {
 }
 
 export const signOutUser = (socket) => async (dispatch) => {
-  dispatch(removeSocketFromState())
   dispatch(cleanMsgReducer())
   dispatch(setUsername(''))
   dispatch(setToken(''))
@@ -130,7 +126,6 @@ export const trySignIn = () => async (dispatch) => {
       dispatch(setUsername(username))
       dispatch(userLogIn(username))
       dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
-      dispatch(setOnlineUsers(username))
       history.push('/chat')
     })
     .catch(() => history.push('/login'))

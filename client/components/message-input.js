@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import classNames from 'classnames'
 import { useSelector, useDispatch } from 'react-redux'
 import { sendMessage } from '../redux/reducers/msg'
 
@@ -6,6 +7,7 @@ const MessageInput = (props) => {
   const dispatch = useDispatch()
   const { username } = useSelector((state) => state.auth)
   const [messageText, setMessageText] = useState('')
+
   const prepareAndSendMessage = () => {
     const timestamp = Date.now()
     const messageToSend = {
@@ -19,9 +21,12 @@ const MessageInput = (props) => {
     dispatch(sendMessage(messageToSend))
     setMessageText('')
   }
+
   const handleKeyPress = (event) => {
     if (messageText && event.key === 'Enter') prepareAndSendMessage()
   }
+
+  const isSendButtonDisabled = !messageText
 
   return (
     <div className="flex m-6 rounded-lg border-2 border-gray-500">
@@ -34,7 +39,11 @@ const MessageInput = (props) => {
         onKeyDown={(e) => handleKeyPress(e)}
       />
       <span
-        className="text-3xl text-gray px-3 border-l-2 border-gray-500 cursor-pointer"
+        className={classNames(
+          isSendButtonDisabled
+            ? 'text-3xl text-gray-300 px-3 border-l-2 border-gray-500 cursor-pointer'
+            : 'text-3xl text-gray-500 px-3 border-l-2 border-gray-500 cursor-pointer'
+        )}
         role="link"
         tabIndex="0"
         onMouseDown={() => prepareAndSendMessage()}

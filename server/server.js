@@ -221,9 +221,15 @@ if (config.isSocketsEnabled) {
       const parsedData = JSON.parse(data)
       if (parsedData.type === 'SHOW_MESSAGE') broadcastUserMessage(parsedData, conn.id)
       if (parsedData.type === 'WELCOME_MESSAGE' && parsedData.username) {
-          if (connectedUsers.findIndex((it) => it.username === parsedData.username) < 0) broadcastInfoMessage('USER_LOGIN', parsedData.username)
-          connectedUsers = [...connectedUsers, { username: parsedData.username, conn }]
+        const connectedUsernames = connectedUsers.map((it) => it.username)
+        const usersToSend = connectedUsernames.filter((it, index) => connectedUsernames.indexOf(it) === index)
+        conn.write(JSON.stringify({ type: 'ONLINEUSERS', onlineUsers: usersToSend }))
+
+        if (connectedUsers.findIndex((it) => it.username === parsedData.username) < 0) {
+          broadcastInfoMessage('USER_LOGIN', parsedData.username)
         }
+        connectedUsers = [...connectedUsers, { username: parsedData.username, conn }]
+      }
     })
 
     conn.on('close', () => {

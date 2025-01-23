@@ -7,7 +7,7 @@ import SockJS from 'sockjs-client'
 import rootReducer from './reducers'
 import createHistory from './history'
 import { addSocketToState, removeSocketFromState } from './reducers/socket'
-import { newMessageReceived } from './reducers/msg'
+import { newMessageReceived, sendMessage } from './reducers/msg'
 
 export const history = createHistory()
 
@@ -25,9 +25,10 @@ const store = createStore(rootReducer(history), initialState, composedEnhancers)
 
 if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
   const initSocket = () => {
-    // console.log('initSocket')
+    const { username, token } = store.getState().auth
     const socket = new SockJS(`${isBrowser ? window.location.origin : 'http://localhost'}/ws`)
     store.dispatch(addSocketToState(socket))
+    if (username && token) store.dispatch(sendMessage({ type: 'WELCOME_MESSAGE', username }))
 
     socket.onopen = () => {
       // store.dispatch(addSocketToState(socket))
@@ -35,7 +36,7 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
 
     socket.onmessage = (message) => {
       const parsedData = JSON.parse(message.data)
-      const { localUsername } = store.getState().auth
+      const localUsername = store.getState().auth.username
       store.dispatch(newMessageReceived(parsedData, localUsername))
     }
 

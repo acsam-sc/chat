@@ -1,5 +1,3 @@
-import { getOnlineUsers } from '../../api/auth'
-
 const ADD_MESSAGE = 'msg/ADD_MESSAGE'
 const USER_LOGIN = 'msg/USER_LOGIN'
 const USER_LOGOUT = 'msg/USER_LOGOUT'
@@ -83,15 +81,9 @@ export const userLogOut = (username) => (dispatch) => {
   dispatch(userLogOutAC(username))
 }
 
-export const setOnlineUsers = (username) => async (dispatch) => {
-  await getOnlineUsers()
-    .then((res) => {
-      const { onlineUsers } = res.data
-      const onlineUsersToSet = onlineUsers.filter((it) => it !== username)
-      dispatch(setOnlineUsersAC(onlineUsersToSet))
-    })
-    // eslint-disable-next-line no-console
-    .catch((err) => console.log('setOnlineUsers: Error getting online users from server:', err))
+export const setOnlineUsers = (onlineUsers, localUsername) => async (dispatch) => {
+  const onlineUsersToSet = onlineUsers.filter((it) => it !== localUsername)
+  dispatch(setOnlineUsersAC(onlineUsersToSet))
 }
 
 export const cleanMsgReducer = () => (dispatch) => {
@@ -99,21 +91,22 @@ export const cleanMsgReducer = () => (dispatch) => {
 }
 
 export const newMessageReceived = (message, localUsername) => (dispatch) => {
+  const { messageID, timestamp, username } = message
   const logInMessage = {
     type: 'SHOW_MESSAGE',
     channel: 'ALL',
-    messageID: message.messageID,
-    timestamp: message.timestamp,
+    messageID,
+    timestamp,
     username: 'ChatInfo',
-    message: `${message.username} logged in`
+    message: `${username} logged in`
   }
   const logOutMessage = {
     type: 'SHOW_MESSAGE',
     channel: 'ALL',
-    messageID: message.messageID,
-    timestamp: message.timestamp,
+    messageID,
+    timestamp,
     username: 'ChatInfo',
-    message: `${message.username} logged out`
+    message: `${username} logged out`
   }
 
   if (message.type === 'USER_LOGIN') {
@@ -124,5 +117,7 @@ export const newMessageReceived = (message, localUsername) => (dispatch) => {
     dispatch(addMessageToState(logOutMessage))
   } else if (message.type === 'SHOW_MESSAGE') {
     dispatch(addMessageToState(message))
+  } else if (message.type === 'ONLINEUSERS') {
+    dispatch(setOnlineUsers(message.onlineUsers, localUsername))
   }
 }
