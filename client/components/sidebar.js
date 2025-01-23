@@ -9,7 +9,8 @@ const Sidebar = () => {
   const onlineUsers = useSelector((state) => state.msg.onlineUsers)
   const { socket } = useSelector((state) => state.socket)
   return (
-    <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:flex">
+    // <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:flex">
+    <div className="bg-purple-800 text-purple-300 w-1/5 flex flex-col flex-grow overflow-y-auto hidden md:flex">
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
         <span>Tailwind CSS</span>
         <svg className="h-6 w-6 text-purple-100 fill-current" viewBox="0 0 32 32">
