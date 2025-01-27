@@ -2,7 +2,6 @@ import React from 'react'
 import Message from './message'
 
 const ChatMessages = (props) => {
-  const timestamp = Date.now()
   return (
     <div className="px-6 py-4 flex flex-col-reverse flex-grow overflow-y-auto">
       {props.reversedMessages.map((it) => {
@@ -11,7 +10,7 @@ const ChatMessages = (props) => {
           it.username === 'ChatInfo' ? chatInfoPic : `/images/userpics/${it.username}.jpg`
         return (
           <Message
-            key={timestamp + it.messageID}
+            key={it.timestamp + it.messageID}
             channel={it.channel}
             messageID={it.messageID}
             timestamp={it.timestamp}

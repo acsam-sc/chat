@@ -2,9 +2,9 @@ import React from 'react'
 
 const Message = (props) => {
   const timestamp = new Date(props.timestamp)
-  const hours = timestamp.getUTCHours().toString().padStart(2, '0')
-  const minutes = timestamp.getUTCMinutes().toString().padStart(2, '0')
-  const seconds = timestamp.getUTCSeconds().toString().padStart(2, '0')
+  const hours = timestamp.getHours().toString().padStart(2, '0')
+  const minutes = timestamp.getMinutes().toString().padStart(2, '0')
+  const seconds = timestamp.getSeconds().toString().padStart(2, '0')
 
   return (
     <div className="flex items-start mb-4">
