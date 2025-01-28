@@ -2,15 +2,26 @@ import React from 'react'
 import classNames from 'classnames'
 import { useSelector, useDispatch } from 'react-redux'
 import { signOutUser } from '../redux/reducers/auth'
+import { useOutsideClick } from './body'
 
-const Sidebar = () => {
+const Sidebar = (props) => {
   const dispatch = useDispatch()
   const myUsername = useSelector((state) => state.auth.username)
   const onlineUsers = useSelector((state) => state.msg.onlineUsers)
   const { socket } = useSelector((state) => state.socket)
+  const { isSidebarOpen, setIsSidebarOpen } = props
+  const sidebarStyle =
+    'bg-purple-800 text-purple-300 md:w-1/5 flex flex-col flex-grow md:transform-none md:relative fixed top-0 left-0 h-full w-1/3 transform transition-transform duration-300 ease-in-out overflow-y-auto'
+
+  const sidebarRef = useOutsideClick(() => setIsSidebarOpen(false))
+
   return (
-    // <div className="bg-purple-800 text-purple-300 w-1/5 h-full flex flex-col hidden md:flex">
-    <div className="bg-purple-800 text-purple-300 w-1/5 flex flex-col flex-grow overflow-y-auto hidden md:flex">
+    <div
+      ref={sidebarRef}
+      className={classNames(
+        isSidebarOpen ? sidebarStyle : sidebarStyle.concat(' -translate-x-full')
+      )}
+    >
       <h1 className="text-white text-xl mb-2 mt-3 px-4 font-sans flex justify-between">
         <span>Tailwind CSS</span>
         <svg className="h-6 w-6 text-purple-100 fill-current" viewBox="0 0 32 32">
