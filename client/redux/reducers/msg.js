@@ -82,7 +82,10 @@ export const userLogOut = (username) => (dispatch) => {
 }
 
 export const setOnlineUsers = (onlineUsers, localUsername) => async (dispatch) => {
-  const onlineUsersToSet = onlineUsers.filter((it) => it !== localUsername)
+  const onlineUsersDeduplicated = onlineUsers.filter(
+    (it, index) => onlineUsers.indexOf(it) === index
+  )
+  const onlineUsersToSet = onlineUsersDeduplicated.filter((it) => it !== localUsername)
   dispatch(setOnlineUsersAC(onlineUsersToSet))
 }
 
